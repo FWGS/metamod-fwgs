@@ -204,6 +204,7 @@
     <None Include="..\extra\config.ini">
       <Filter>Extra</Filter>
     </None>
+    <None Include="..\extra\plugins.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="metamod.rc">
