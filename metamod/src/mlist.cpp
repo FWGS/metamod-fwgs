@@ -455,7 +455,6 @@ bool MPluginList::cmd_addload(const char* args)
 
 	META_CONS("Loaded plugin '%s' successfully", pl_added->m_desc);
 	show();
-	meta_rebuild_callbacks();
 	return true;
 }
 
@@ -482,7 +481,6 @@ bool MPluginList::load()
 	}
 
 	META_LOG("dll: Finished loading %d plugins", n);
-	meta_rebuild_callbacks();
 	return true;
 }
 
@@ -560,7 +558,6 @@ bool MPluginList::refresh(PLUG_LOADTIME now)
 	}
 
 	META_LOG("dll: Finished updating %d plugins; kept %d, loaded %d, unloaded %d, reloaded %d, delayed %d", ndone, nkept, nloaded, nunloaded, nreloaded, ndelayed);
-	meta_rebuild_callbacks();
 	return true;
 }
 

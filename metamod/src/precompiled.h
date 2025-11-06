@@ -17,7 +17,6 @@
 #include <list>
 
 #include "osconfig.h"
-#include "jitasm.h"
 #include "strtools.h"
 
 #define CreateInterface mm_CreateInterface

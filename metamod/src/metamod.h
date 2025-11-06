@@ -89,7 +89,6 @@ void metamod_startup();
 
 bool meta_init_gamedll();
 bool meta_load_gamedll();
-void meta_rebuild_callbacks();
 
 // lotsa macros...
 

@@ -116,5 +116,3 @@ private:
 	static_allocator m_callback_allocator;
 	static_allocator m_tramp_allocator;
 };
-
-extern CJit g_jit;

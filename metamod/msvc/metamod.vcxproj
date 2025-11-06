@@ -146,7 +146,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\api_info.cpp" />
-    <ClCompile Include="..\src\callback_jit.cpp" />
     <ClCompile Include="..\src\commands_meta.cpp" />
     <ClCompile Include="..\src\conf_meta.cpp" />
     <ClCompile Include="..\src\dllapi.cpp" />
@@ -182,7 +181,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\api_info.h" />
-    <ClInclude Include="..\src\callback_jit.h" />
     <ClInclude Include="..\src\commands_meta.h" />
     <ClInclude Include="..\src\conf_meta.h" />
     <ClInclude Include="..\src\dllapi.h" />
@@ -191,7 +189,6 @@
     <ClInclude Include="..\src\enginecallbacks.h" />
     <ClInclude Include="..\src\game_support.h" />
     <ClInclude Include="..\src\h_export.h" />
-    <ClInclude Include="..\src\jitasm.h" />
     <ClInclude Include="..\src\linkent.h" />
     <ClInclude Include="..\src\log_meta.h" />
     <ClInclude Include="..\src\mdebug.h" />

@@ -301,8 +301,6 @@ int EXT_FUNC mutil_LoadMetaPlugin(plid_t plid, const char* fname, PLUG_LOADTIME 
 		return 1; // TODO: WTF
 	}
 
-	meta_rebuild_callbacks();
-
 	if (plugin_handle)
 		*plugin_handle = (void *)pl_loaded->sys_module().gethandle();
 
@@ -330,7 +328,6 @@ int EXT_FUNC mutil_UnloadMetaPlugin(plid_t plid, const char* fname, PLUG_LOADTIM
 		return 1;
 
 	if (findp->plugin_unload(plid, now, reason)) {
-		meta_rebuild_callbacks();
 		return 0;
 	}
 
@@ -349,7 +346,6 @@ int EXT_FUNC mutil_UnloadMetaPluginByHandle(plid_t plid, void* plugin_handle, PL
 		return 1;
 
 	if (findp->plugin_unload(plid, now, reason)) {
-		meta_rebuild_callbacks();
 		return 0;
 	}
 

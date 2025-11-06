@@ -71,9 +71,6 @@
     <ClCompile Include="..\src\utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\callback_jit.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\public_amalgamation.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -173,12 +170,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\callback_jit.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\jitasm.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\mdebug.h">

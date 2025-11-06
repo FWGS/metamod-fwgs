@@ -1,7 +1,5 @@
 #include "precompiled.h"
 
-CJit g_jit;
-
 class CUniqueLabel : public std::string
 {
 public:
