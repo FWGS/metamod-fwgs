@@ -249,7 +249,6 @@ void meta_rebuild_callbacks();
 // declare/init some variables
 
 #define SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, api_info_table) \
-	int i; \
 	ret_t dllret = ret_init; \
 	ret_t override_ret = ret_init; \
 	ret_t pub_override_ret = ret_init; \
@@ -261,7 +260,7 @@ void meta_rebuild_callbacks();
 	const char *pfn_string = api_info_table.pfnName.name; \
 	meta_globals_t backup_meta_globals; \
 	/*Fix bug with metamod-bot-plugins*/ \
-	if (CALL_API_count++>0) \
+	if (g_CALL_API_count++>0) \
 		/*Backup g_metaGlobals*/ \
 		backup_meta_globals = g_metaGlobals;
 

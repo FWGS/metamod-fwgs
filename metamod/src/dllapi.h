@@ -85,8 +85,3 @@ typedef void (*FN_GAMESHUTDOWN)();
 typedef int (*FN_SHOULDCOLLIDE)(edict_t *pentTouched, edict_t *pentOther);
 typedef void (*FN_CVARVALUE)(const edict_t *pEnt, const char *value);   //! Obsolete! Use FN_CVARVALUE2 instead
 typedef void (*FN_CVARVALUE2)(const edict_t *pEnt, int requestID, const char *cvarName, const char *value);
-
-#ifdef METAMOD_CORE
-void compile_gamedll_callbacks();
-void disable_clientcommand_fwd();
-#endif

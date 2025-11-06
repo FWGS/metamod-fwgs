@@ -148,8 +148,6 @@ void metamod_startup()
 	// until later.
 	if (g_config->m_debuglevel)
 		CVAR_SET_FLOAT("meta_debug", g_config->m_debuglevel);
-	if (!g_config->m_clientmeta)
-		disable_clientcommand_fwd();
 
 	// Prepare for registered commands from plugins.
 	g_regCmds = new MRegCmdList();
@@ -440,9 +438,6 @@ bool meta_load_gamedll()
 		return false;
 	}
 
-	// prepare gamedll callbacks
-	compile_gamedll_callbacks();
-
 	META_LOG("Game DLL for '%s' loaded successfully", g_GameDLL.desc);
 	return true;
 }
@@ -541,7 +536,6 @@ void meta_rebuild_callbacks()
 	g_jit.clear_callbacks();
 
 	compile_engine_callbacks();
-	compile_gamedll_callbacks();
 
 	if (fixdata.size()) {
 		META_LOG("dll: Begin callbacks fixing...");

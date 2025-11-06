@@ -19,53 +19,48 @@
 #define META_NEWAPI_HANDLE_void(FN_TYPE, pfnName, pfn_args) \
 	SETUP_API_CALLS_void(FN_TYPE, pfnName, g_newapi_info); \
 	CALL_PLUGIN_API_void(P_PRE, pfnName, pfn_args, m_newapi_table); \
-	CALL_GAME_API_void(pfnName, pfn_args, m_newapi_table); \
+	CALL_GAME_API_void(pfnName, pfn_args, newapi_table); \
 	CALL_PLUGIN_API_void(P_POST, pfnName, pfn_args, m_newapi_post_table);
 
 // The "new" api routines (just 3 right now), functions returning an actual value.
 #define META_NEWAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pfn_args) \
 	SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, g_newapi_info); \
 	CALL_PLUGIN_API(P_PRE, ret_init, pfnName, pfn_args, MRES_SUPERCEDE, m_newapi_table); \
-	CALL_GAME_API(pfnName, pfn_args, m_newapi_table); \
+	CALL_GAME_API(pfnName, pfn_args, newapi_table); \
 	CALL_PLUGIN_API(P_POST, ret_init, pfnName, pfn_args, MRES_OVERRIDE, m_newapi_post_table);
 
-#define CDATA_DLL_H(x, p, h)    CDATA_ENTRY(DLL_FUNCTIONS, x, p, size_t(h))
-#define CDATA_DLL(x)            CDATA_ENTRY(DLL_FUNCTIONS, x, P_PRE, 0u)
-#define CDATA_NEWDLL_H(x, p, h) CDATA_ENTRY(NEW_DLL_FUNCTIONS, x, p, size_t(h))
-#define CDATA_NEWDLL(x)         CDATA_ENTRY(NEW_DLL_FUNCTIONS, x, P_PRE, 0u)
-
-DLL_FUNCTIONS sFunctionTable;
-DLL_FUNCTIONS sFunctionTable_jit;
-DLL_FUNCTIONS *pHookedDllFunctions = &sFunctionTable;
-NEW_DLL_FUNCTIONS sNewFunctionTable;
-NEW_DLL_FUNCTIONS sNewFunctionTable_jit;
-NEW_DLL_FUNCTIONS *pHookedNewDllFunctions = &sNewFunctionTable;
-
 // Unload game DLL and meta plugins
-void MM_POST_HOOK EXT_FUNC mm_GameShutdown()
+static void MM_POST_HOOK EXT_FUNC mm_GameShutdown()
 {
+	META_NEWAPI_HANDLE_void(FN_GAMESHUTDOWN, pfnGameShutdown, ());
+
 	g_metamod_active = false;
-	if (g_plugins && !g_dedicated_server) g_plugins->unload_all();
+	if (g_plugins && !g_dedicated_server)
+		g_plugins->unload_all();
 
 	g_meta_extdll.unload();
 	g_GameDLL.sys_module.unload();
 	g_engine.sys_module.unload();
+
+	RETURN_API_void();
 }
 
-void MM_PRE_HOOK EXT_FUNC mm_ClientConnect(edict_t *pEntity, const char *, const char *, char[128])
+static BOOL mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[ 128 ] )
 {
 	g_players.clear_player_cvar_query(pEntity);
+	META_DLLAPI_HANDLE(BOOL, TRUE, FN_CLIENTCONNECT, pfnClientConnect, (pEntity, pszName, pszAddress, szRejectReason));
+	RETURN_API();
 }
 
-void MM_PRE_HOOK EXT_FUNC mm_ClientDisconnect(edict_t *pEntity)
+static void MM_PRE_HOOK EXT_FUNC mm_ClientDisconnect(edict_t *pEntity)
 {
 	g_players.clear_player_cvar_query(pEntity);
 }
 
 // this forward can be disabled from metamod.cpp
-void MM_PRE_HOOK mm_ClientCommand(edict_t *pEntity)
+static void MM_PRE_HOOK mm_ClientCommand(edict_t *pEntity)
 {
-	if (!Q_strcmp(CMD_ARGV(0), "meta")) {
+	if (!g_config->m_clientmeta && !Q_strcmp(CMD_ARGV(0), "meta")) {
 		client_meta(pEntity);
 	}
 
@@ -73,7 +68,7 @@ void MM_PRE_HOOK mm_ClientCommand(edict_t *pEntity)
 	RETURN_API_void();
 }
 
-void EXT_FUNC mm_ServerDeactivate()
+static void EXT_FUNC mm_ServerDeactivate()
 {
 	//sFunctionTable_jit.pfnServerDeactivate();
 	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, ());
@@ -100,80 +95,385 @@ void EXT_FUNC mm_ServerDeactivate()
 	RETURN_API_void();
 }
 
-compile_data_t g_dllfunc_cdata[] =
+static void mm_GameDLLInit(void)
 {
-	CDATA_DLL(pfnGameInit),                                         // Initialize the game (one-time call after loading of game .dll)
-	CDATA_DLL(pfnSpawn),                                            // 
-	CDATA_DLL(pfnThink),                                            // 
-	CDATA_DLL(pfnUse),                                              // 
-	CDATA_DLL(pfnTouch),                                            // 
-	CDATA_DLL(pfnBlocked),                                          // 
-	CDATA_DLL(pfnKeyValue),                                         // 
-	CDATA_DLL(pfnSave),                                             // 
-	CDATA_DLL(pfnRestore),                                          // 
-	CDATA_DLL(pfnSetAbsBox),                                        // 
-                                                                       
-	CDATA_DLL(pfnSaveWriteFields),                                  // 
-	CDATA_DLL(pfnSaveReadFields),                                   // 
-                                                                       
-	CDATA_DLL(pfnSaveGlobalState),                                  // 
-	CDATA_DLL(pfnRestoreGlobalState),                               // 
-	CDATA_DLL(pfnResetGlobalState),                                 // 
-                                                                       
-	CDATA_DLL_H(pfnClientConnect, P_PRE, mm_ClientConnect),         // (wd) Client has connected
-	CDATA_DLL_H(pfnClientDisconnect, P_PRE, mm_ClientDisconnect),   // (wd) Player has left the game
-	CDATA_DLL(pfnClientKill),                                       // (wd) Player has typed "kill"
-	CDATA_DLL(pfnClientPutInServer),                                // (wd) Client is entering the game
-	CDATA_DLL_H(pfnClientCommand, P_PRE, mm_ClientCommand),            
-	CDATA_DLL(pfnClientUserInfoChanged),                            // (wd) Client has updated their setinfo structure
-	CDATA_DLL(pfnServerActivate),                                   // (wd) Server is starting a new map
-	CDATA_DLL(pfnServerDeactivate),                                 // (wd) Server is leaving the map (shutdown), or changelevel); SDK2
-                                                                       
-	CDATA_DLL(pfnPlayerPreThink),                                   // 
-	CDATA_DLL(pfnPlayerPostThink),                                  // 
-                                                                       
-	CDATA_DLL(pfnStartFrame),                                       // 
-	CDATA_DLL(pfnParmsNewLevel),                                    // 
-	CDATA_DLL(pfnParmsChangeLevel),                                 // 
-                                                                       
-	CDATA_DLL(pfnGetGameDescription),                               // Returns string describing current .dll.  E.g. "TeamFotrress 2"), "Half-Life"
-	CDATA_DLL(pfnPlayerCustomization),                              // Notifies .dll of new customization for player.
-                                                                       
-	CDATA_DLL(pfnSpectatorConnect),                                 // Called when spectator joins server
-	CDATA_DLL(pfnSpectatorDisconnect),                              // Called when spectator leaves the server
-	CDATA_DLL(pfnSpectatorThink),                                   // Called when spectator sends a command packet (usercmd_t)
-                                                                       
-	CDATA_DLL(pfnSys_Error),                                        // Notify game .dll that engine is going to shut down.  Allows mod authors to set a breakpoint.  SDK2
-                                                                       
-	CDATA_DLL(pfnPM_Move),                                          // (wd) SDK2
-	CDATA_DLL(pfnPM_Init),                                          // Server version of player movement initialization; (wd) SDK2
-	CDATA_DLL(pfnPM_FindTextureType),                               // (wd) SDK2
-                                                                       
-	CDATA_DLL(pfnSetupVisibility),                                  // Set up PVS and PAS for networking for this client; (wd) SDK2
-	CDATA_DLL(pfnUpdateClientData),                                 // Set up data sent only to specific client; (wd) SDK2
-	CDATA_DLL(pfnAddToFullPack),                                    // (wd) SDK2
-	CDATA_DLL(pfnCreateBaseline),                                   // Tweak entity baseline for network encoding), allows setup of player baselines), too.; (wd) SDK2
-	CDATA_DLL(pfnRegisterEncoders),                                 // Callbacks for network encoding; (wd) SDK2
-	CDATA_DLL(pfnGetWeaponData),                                    // (wd) SDK2
-	CDATA_DLL(pfnCmdStart),                                         // (wd) SDK2
-	CDATA_DLL(pfnCmdEnd),                                           // (wd) SDK2
-	CDATA_DLL(pfnConnectionlessPacket),                             // (wd) SDK2
-	CDATA_DLL(pfnGetHullBounds),                                    // (wd) SDK2
-	CDATA_DLL(pfnCreateInstancedBaselines),                         // (wd) SDK2
-	CDATA_DLL(pfnInconsistentFile),                                 // (wd) SDK2
-	CDATA_DLL(pfnAllowLagCompensation),                             // (wd) SDK2
+	META_DLLAPI_HANDLE_void(FN_GAMEINIT, pfnGameInit, ());
+	RETURN_API_void();
+}
+
+static int mm_DispatchSpawn(edict_t *pent)
+{
+	// Success == 0, Failure == -1 ?
+	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHSPAWN, pfnSpawn, (pent));
+	RETURN_API();
+}
+
+static void mm_DispatchThink(edict_t *pent)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHTHINK, pfnThink, (pent));
+	RETURN_API_void();
+}
+
+static void mm_DispatchUse(edict_t *pentUsed, edict_t *pentOther)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHUSE, pfnUse, (pentUsed, pentOther));
+	RETURN_API_void();
+}
+
+static void mm_DispatchTouch(edict_t *pentTouched, edict_t *pentOther)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHTOUCH, pfnTouch, (pentTouched, pentOther));
+	RETURN_API_void();
+}
+
+static void mm_DispatchBlocked(edict_t *pentBlocked, edict_t *pentOther)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHBLOCKED, pfnBlocked, (pentBlocked, pentOther));
+	RETURN_API_void();
+}
+
+static void mm_DispatchKeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHKEYVALUE, pfnKeyValue, (pentKeyvalue, pkvd));
+	RETURN_API_void();
+}
+
+static void mm_DispatchSave(edict_t *pent, SAVERESTOREDATA *pSaveData)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHSAVE, pfnSave, (pent, pSaveData));
+	RETURN_API_void();
+}
+
+static int mm_DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int globalEntity)
+{
+	// Success == 0, Failure == -1 ?
+	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHRESTORE, pfnRestore, (pent, pSaveData, globalEntity));
+	RETURN_API();
+}
+
+static void mm_DispatchObjectCollsionBox(edict_t *pent)
+{
+	META_DLLAPI_HANDLE_void(FN_DISPATCHOBJECTCOLLISIONBOX, pfnSetAbsBox, (pent));
+	RETURN_API_void();
+}
+
+static void mm_SaveWriteFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount)
+{
+	META_DLLAPI_HANDLE_void(FN_SAVEWRITEFIELDS, pfnSaveWriteFields, (pSaveData, pname, pBaseData, pFields, fieldCount));
+	RETURN_API_void();
+}
+
+static void mm_SaveReadFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount)
+{
+	META_DLLAPI_HANDLE_void(FN_SAVEREADFIELDS, pfnSaveReadFields, (pSaveData, pname, pBaseData, pFields, fieldCount));
+	RETURN_API_void();
+}
+
+static void mm_SaveGlobalState(SAVERESTOREDATA *pSaveData)
+{
+	META_DLLAPI_HANDLE_void(FN_SAVEGLOBALSTATE, pfnSaveGlobalState, (pSaveData));
+	RETURN_API_void();
+}
+
+static void mm_RestoreGlobalState(SAVERESTOREDATA *pSaveData)
+{
+	META_DLLAPI_HANDLE_void(FN_RESTOREGLOBALSTATE, pfnRestoreGlobalState, (pSaveData));
+	RETURN_API_void();
+}
+
+static void mm_ResetGlobalState(void)
+{
+	META_DLLAPI_HANDLE_void(FN_RESETGLOBALSTATE, pfnResetGlobalState, ());
+	RETURN_API_void();
+}
+
+static void mm_ClientKill(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_CLIENTKILL, pfnClientKill, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_ClientPutInServer(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_CLIENTPUTINSERVER, pfnClientPutInServer, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_ClientUserInfoChanged(edict_t *pEntity, char *infobuffer)
+{
+	META_DLLAPI_HANDLE_void(FN_CLIENTUSERINFOCHANGED, pfnClientUserInfoChanged, (pEntity, infobuffer));
+	RETURN_API_void();
+}
+
+static void mm_ServerActivate(edict_t *pEdictList, int edictCount, int clientMax)
+{
+	META_DLLAPI_HANDLE_void(FN_SERVERACTIVATE, pfnServerActivate, (pEdictList, edictCount, clientMax));
+	RETURN_API_void();
+}
+
+static void mm_PlayerPreThink(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_PLAYERPRETHINK, pfnPlayerPreThink, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_PlayerPostThink(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_PLAYERPOSTTHINK, pfnPlayerPostThink, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_StartFrame(void)
+{
+	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, ());
+	RETURN_API_void();
+}
+
+static void mm_ParmsNewLevel(void)
+{
+	META_DLLAPI_HANDLE_void(FN_PARMSNEWLEVEL, pfnParmsNewLevel, ());
+	RETURN_API_void();
+}
+
+static void mm_ParmsChangeLevel(void)
+{
+	META_DLLAPI_HANDLE_void(FN_PARMSCHANGELEVEL, pfnParmsChangeLevel, ());
+	RETURN_API_void();
+}
+
+static const char *mm_GetGameDescription(void)
+{
+	META_DLLAPI_HANDLE(const char *, NULL, FN_GETGAMEDESCRIPTION, pfnGetGameDescription, ());
+	RETURN_API();
+}
+
+static void mm_PlayerCustomization(edict_t *pEntity, customization_t *pCust)
+{
+	META_DLLAPI_HANDLE_void(FN_PLAYERCUSTOMIZATION, pfnPlayerCustomization, (pEntity, pCust));
+	RETURN_API_void();
+}
+
+static void mm_SpectatorConnect(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_SPECTATORCONNECT, pfnSpectatorConnect, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_SpectatorDisconnect(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_SPECTATORDISCONNECT, pfnSpectatorDisconnect, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_SpectatorThink(edict_t *pEntity)
+{
+	META_DLLAPI_HANDLE_void(FN_SPECTATORTHINK, pfnSpectatorThink, (pEntity));
+	RETURN_API_void();
+}
+
+static void mm_Sys_Error(const char *error_string)
+{
+	META_DLLAPI_HANDLE_void(FN_SYS_ERROR, pfnSys_Error, (error_string));
+	RETURN_API_void();
+}
+
+static void mm_PM_Move (struct playermove_s *ppmove, int server)
+{
+	META_DLLAPI_HANDLE_void(FN_PM_MOVE, pfnPM_Move, (ppmove, server));
+	RETURN_API_void();
+}
+
+static void mm_PM_Init(struct playermove_s *ppmove)
+{
+	META_DLLAPI_HANDLE_void(FN_PM_INIT, pfnPM_Init, (ppmove));
+	RETURN_API_void();
+}
+
+static char mm_PM_FindTextureType(char *name)
+{
+	META_DLLAPI_HANDLE(char, '\0', FN_PM_FINDTEXTURETYPE, pfnPM_FindTextureType, (name));
+	RETURN_API();
+}
+
+static void mm_SetupVisibility(edict_t *pViewEntity, edict_t *pClient, unsigned char **pvs, unsigned char **pas)
+{
+	META_DLLAPI_HANDLE_void(FN_SETUPVISIBILITY, pfnSetupVisibility, (pViewEntity, pClient, pvs, pas));
+	RETURN_API_void();
+}
+
+static void mm_UpdateClientData (const struct edict_s *ent, int sendweapons, struct clientdata_s *cd)
+{
+	META_DLLAPI_HANDLE_void(FN_UPDATECLIENTDATA, pfnUpdateClientData, (ent, sendweapons, cd));
+	RETURN_API_void();
+}
+
+static int mm_AddToFullPack(struct entity_state_s *state, int e, edict_t *ent, edict_t *host, int hostflags, int player, unsigned char *pSet)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_ADDTOFULLPACK, pfnAddToFullPack, (state, e, ent, host, hostflags, player, pSet));
+	RETURN_API();
+}
+
+static void mm_CreateBaseline(int player, int eindex, struct entity_state_s *baseline, struct edict_s *entity, int playermodelindex, vec3_t player_mins, vec3_t player_maxs)
+{
+	META_DLLAPI_HANDLE_void(FN_CREATEBASELINE, pfnCreateBaseline, (player, eindex, baseline, entity, playermodelindex, player_mins, player_maxs));
+	RETURN_API_void();
+}
+
+static void mm_RegisterEncoders(void)
+{
+	META_DLLAPI_HANDLE_void(FN_REGISTERENCODERS, pfnRegisterEncoders, ());
+	RETURN_API_void();
+}
+
+static int mm_GetWeaponData(struct edict_s *player, struct weapon_data_s *info)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_GETWEAPONDATA, pfnGetWeaponData, (player, info));
+	RETURN_API();
+}
+
+static void mm_CmdStart(const edict_t *player, const struct usercmd_s *cmd, unsigned int random_seed)
+{
+	META_DLLAPI_HANDLE_void(FN_CMDSTART, pfnCmdStart, (player, cmd, random_seed));
+	RETURN_API_void();
+}
+
+static void mm_CmdEnd (const edict_t *player)
+{
+	META_DLLAPI_HANDLE_void(FN_CMDEND, pfnCmdEnd, (player));
+	RETURN_API_void();
+}
+
+static int mm_ConnectionlessPacket(const struct netadr_s *net_from, const char *args, char *response_buffer, int *response_buffer_size)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_CONNECTIONLESSPACKET, pfnConnectionlessPacket, (net_from, args, response_buffer, response_buffer_size));
+	RETURN_API();
+}
+
+static int mm_GetHullBounds(int hullnumber, float *mins, float *maxs)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_GETHULLBOUNDS, pfnGetHullBounds, (hullnumber, mins, maxs));
+	RETURN_API();
+}
+
+static void mm_CreateInstancedBaselines (void)
+{
+	META_DLLAPI_HANDLE_void(FN_CREATEINSTANCEDBASELINES, pfnCreateInstancedBaselines, ());
+	RETURN_API_void();
+}
+
+static int mm_InconsistentFile(const edict_t *player, const char *filename, char *disconnect_message)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_INCONSISTENTFILE, pfnInconsistentFile, (player, filename, disconnect_message));
+	RETURN_API();
+}
+
+static int mm_AllowLagCompensation(void)
+{
+	META_DLLAPI_HANDLE(int, 0, FN_ALLOWLAGCOMPENSATION, pfnAllowLagCompensation, ());
+	RETURN_API();
+}
+
+static void mm_OnFreeEntPrivateData(edict_t *pEnt)
+{
+	META_NEWAPI_HANDLE_void(FN_ONFREEENTPRIVATEDATA, pfnOnFreeEntPrivateData, (pEnt));
+	RETURN_API_void();
+}
+
+static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther)
+{
+	META_NEWAPI_HANDLE(int, 1, FN_SHOULDCOLLIDE, pfnShouldCollide, (pentTouched, pentOther));
+	RETURN_API();
+}
+
+static void mm_CvarValue(const edict_t *pEdict, const char *value)
+{
+	g_players.clear_player_cvar_query(pEdict);
+	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, (pEdict, value));
+	RETURN_API_void();
+}
+
+static void mm_CvarValue2(const edict_t *pEdict, int requestID, const char *cvarName, const char *value)
+{
+	META_NEWAPI_HANDLE_void(FN_CVARVALUE2, pfnCvarValue2, (pEdict, requestID, cvarName, value));
+	RETURN_API_void();
+}
+
+DLL_FUNCTIONS sFunctionTable =
+{
+	mm_GameDLLInit,				// pfnGameInit()			Initialize the game (one-time call after loading of game .dll)
+	mm_DispatchSpawn,			// pfnSpawn()
+	mm_DispatchThink,			// pfnThink()
+	mm_DispatchUse,				// pfnUse()
+	mm_DispatchTouch,			// pfnTouch()
+	mm_DispatchBlocked,			// pfnBlocked()
+	mm_DispatchKeyValue,			// pfnKeyValue()
+	mm_DispatchSave,			// pfnSave()
+	mm_DispatchRestore,			// pfnRestore()
+	mm_DispatchObjectCollsionBox,		// pfnSetAbsBox()
+
+	mm_SaveWriteFields,			// pfnSaveWriteFields()
+	mm_SaveReadFields,			// pfnSaveReadFields()
+
+	mm_SaveGlobalState,			// pfnSaveGlobalState()
+	mm_RestoreGlobalState,			// pfnRestoreGlobalState()
+	mm_ResetGlobalState,			// pfnResetGlobalState()
+
+	mm_ClientConnect,			// pfnClientConnect()			(wd) Client has connected
+	mm_ClientDisconnect,			// pfnClientDisconnect()		(wd) Player has left the game
+	mm_ClientKill,				// pfnClientKill()			(wd) Player has typed "kill"
+	mm_ClientPutInServer,			// pfnClientPutInServer()		(wd) Client is entering the game
+	mm_ClientCommand,			// pfnClientCommand()			(wd) Player has sent a command (typed, or from a bind)
+	mm_ClientUserInfoChanged,		// pfnClientUserInfoChanged()		(wd) Client has updated their setinfo structure
+	mm_ServerActivate,			// pfnServerActivate()			(wd) Server is starting a new map
+	mm_ServerDeactivate,			// pfnServerDeactivate()		(wd) Server is leaving the map (shutdown, or changelevel); SDK2
+
+	mm_PlayerPreThink,			// pfnPlayerPreThink()
+	mm_PlayerPostThink,			// pfnPlayerPostThink()
+
+	mm_StartFrame,				// pfnStartFrame()
+	mm_ParmsNewLevel,			// pfnParmsNewLevel()
+	mm_ParmsChangeLevel,			// pfnParmsChangeLevel()
+
+	mm_GetGameDescription,			// pfnGetGameDescription()		Returns string describing current .dll.  E.g. "TeamFotrress 2", "Half-Life"
+	mm_PlayerCustomization,			// pfnPlayerCustomization()		Notifies .dll of new customization for player.
+
+	mm_SpectatorConnect,			// pfnSpectatorConnect()		Called when spectator joins server
+	mm_SpectatorDisconnect,			// pfnSpectatorDisconnect()		Called when spectator leaves the server
+	mm_SpectatorThink,			// pfnSpectatorThink()			Called when spectator sends a command packet (usercmd_t)
+
+	mm_Sys_Error,				// pfnSys_Error()			Notify game .dll that engine is going to shut down.  Allows mod authors to set a breakpoint.  SDK2
+
+	mm_PM_Move,				// pfnPM_Move()				(wd) SDK2
+	mm_PM_Init,				// pfnPM_Init()				Server version of player movement initialization; (wd) SDK2
+	mm_PM_FindTextureType,			// pfnPM_FindTextureType()		(wd) SDK2
+
+	mm_SetupVisibility,			// pfnSetupVisibility()			Set up PVS and PAS for networking for this client; (wd) SDK2
+	mm_UpdateClientData,			// pfnUpdateClientData()		Set up data sent only to specific client; (wd) SDK2
+	mm_AddToFullPack,			// pfnAddToFullPack()			(wd) SDK2
+	mm_CreateBaseline,			// pfnCreateBaseline()			Tweak entity baseline for network encoding, allows setup of player baselines, too.; (wd) SDK2
+	mm_RegisterEncoders,			// pfnRegisterEncoders()		Callbacks for network encoding; (wd) SDK2
+	mm_GetWeaponData,			// pfnGetWeaponData()			(wd) SDK2
+	mm_CmdStart,				// pfnCmdStart()			(wd) SDK2
+	mm_CmdEnd,				// pfnCmdEnd()				(wd) SDK2
+	mm_ConnectionlessPacket,		// pfnConnectionlessPacket()		(wd) SDK2
+	mm_GetHullBounds,			// pfnGetHullBounds()			(wd) SDK2
+	mm_CreateInstancedBaselines,		// pfnCreateInstancedBaselines()	(wd) SDK2
+	mm_InconsistentFile,			// pfnInconsistentFile()		(wd) SDK2
+	mm_AllowLagCompensation,		// pfnAllowLagCompensation()		(wd) SDK2
 };
 
-compile_data_t g_newdllfunc_cdata[] =
+NEW_DLL_FUNCTIONS sNewFunctionTable =
 {
-	CDATA_NEWDLL(pfnOnFreeEntPrivateData),                          // Called right before the object's memory is freed. Calls its destructor.
-	CDATA_NEWDLL_H(pfnGameShutdown, P_POST, mm_GameShutdown),        //
-	CDATA_NEWDLL(pfnShouldCollide),                                 //
-
-	CDATA_NEWDLL(pfnCvarValue),                                     // (fz) Use mm_CvarValue2 instead
-	CDATA_NEWDLL(pfnCvarValue2)                                     // (fz) When pfnQueryClientCvarValue2() completes it will call
-	// pfnCvarValue2() with the request ID supplied earlier, the name of the cvar requested and the value of that cvar.
+	&mm_OnFreeEntPrivateData,	// pfnOnFreeEntPrivateData() Called right before the object's memory is freed. Calls its destructor.
+	&mm_GameShutdown,			// pfnGameShutdown()
+	&mm_ShouldCollide,			// pfnShouldCollide()
+	&mm_CvarValue,				// pfnCvarValue()  (fz) Use mm_CvarValue2 instead
+	&mm_CvarValue2				// pfnCvarValue2() (fz) When pfnQueryClientCvarValue2() completes it will call
+								// pfnCvarValue2() with the request ID supplied earlier, the name of the cvar requested and the value of that cvar.
 };
+
+DLL_FUNCTIONS *pHookedDllFunctions = &sFunctionTable;
+NEW_DLL_FUNCTIONS *pHookedNewDllFunctions = &sNewFunctionTable;
 
 // It's not clear what the difference is between GetAPI and GetAPI2; they
 // both appear to return the exact same function table.
@@ -279,86 +579,4 @@ C_DLLEXPORT int Server_GetPhysicsInterface(int iVersion, server_physics_api_t *p
 		return 0; // handled
 	};
 	return TRUE;
-}
-
-void compile_dllfunc_callbacks()
-{
-	jitdata_t jitdata;
-	jitdata.plugins = g_plugins ? g_plugins->getPlugins() : nullptr;
-	jitdata.table_offset = offsetof(MPlugin, m_dllapi_table);
-	jitdata.post_table_offset = offsetof(MPlugin, m_dllapi_post_table);
-
-	for (auto& cd : g_dllfunc_cdata) {
-		jitdata.pfn_original = *(size_t *)(size_t(g_GameDLL.funcs.dllapi_table) + cd.offset);
-		jitdata.args_count = cd.args_count;
-		jitdata.rettype = cd.rettype;
-		jitdata.has_varargs = cd.has_varargs;
-		jitdata.pfn_offset = cd.offset;
-		jitdata.mm_hook_time = cd.mm_hook_time;
-		jitdata.mm_hook = cd.mm_hook;
-
-#ifdef JIT_DEBUG
-		jitdata.name = cd.name;
-#endif
-
-		*(size_t *)(size_t(&sFunctionTable_jit) + cd.offset) = g_jit.compile_callback(&jitdata);
-	}
-}
-
-void compile_newdllfunc_callbacks()
-{
-	jitdata_t jitdata;
-	jitdata.plugins = g_plugins ? g_plugins->getPlugins() : nullptr;
-	jitdata.table_offset = offsetof(MPlugin, m_newapi_table);
-	jitdata.post_table_offset = offsetof(MPlugin, m_newapi_post_table);
-
-	for (auto& cd : g_newdllfunc_cdata) {
-		jitdata.pfn_original = g_GameDLL.funcs.newapi_table ? *(size_t *)(size_t(g_GameDLL.funcs.newapi_table) + cd.offset) : 0;
-		jitdata.args_count = cd.args_count;
-		jitdata.rettype = cd.rettype;
-		jitdata.has_varargs = cd.has_varargs;
-		jitdata.pfn_offset = cd.offset;
-		jitdata.mm_hook_time = cd.mm_hook_time;
-		jitdata.mm_hook = cd.mm_hook;
-
-#ifdef JIT_DEBUG
-		jitdata.name = cd.name;
-#endif
-
-		*(size_t *)(size_t(&sNewFunctionTable_jit) + cd.offset) = g_jit.compile_callback(&jitdata);
-	}
-}
-
-void compile_gamedll_tramps()
-{
-	// we compile simple static functions that will call dynamic callbacks
-	for (auto& cd : g_dllfunc_cdata) {
-		*(size_t *)(size_t(&sFunctionTable) + cd.offset) = g_jit.compile_tramp(size_t(&sFunctionTable_jit) + cd.offset);
-	}
-
-	// use direct hook to prevent crash after callbacks rebuilding
-	sFunctionTable.pfnServerDeactivate = mm_ServerDeactivate;
-	sFunctionTable.pfnClientCommand = mm_ClientCommand;
-
-	for (auto& cd : g_newdllfunc_cdata) {
-		*(size_t *)(size_t(&sNewFunctionTable) + cd.offset) = g_jit.compile_tramp(size_t(&sNewFunctionTable_jit) + cd.offset);
-	}
-}
-
-void compile_gamedll_callbacks()
-{
-	static bool initialized = false;
-
-	if (!initialized) {
-		compile_gamedll_tramps();
-		initialized = true;
-	}
-
-	compile_dllfunc_callbacks();
-	compile_newdllfunc_callbacks();
-}
-
-void disable_clientcommand_fwd()
-{
-	g_dllfunc_cdata[offsetof(DLL_FUNCTIONS, pfnClientCommand) / sizeof(int)].mm_hook = 0;
 }
