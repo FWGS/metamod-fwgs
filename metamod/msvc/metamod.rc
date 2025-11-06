@@ -72,11 +72,11 @@ BEGIN
 	BEGIN
 		BLOCK "041904b0"
 		BEGIN
-			VALUE "Comments", "Metamod-r is fully reworked fork of original Metamod-p by Jussi Kivilinna. Metamod allows running multiple mod-like plugin DLLs, to add functionality or change the behavior of the running HLDS game mod."
-			VALUE "FileDescription", "Metamod-r Half-Life MOD DLL"
+			VALUE "Comments", "Metamod-FWGS is more flexible and cross-platform fork of Metamod-R. Metamod allows running multiple mod-like plugin DLLs, to add functionality or change the behavior of the running HLDS game mod."
+			VALUE "FileDescription", "Metamod-FWGS Library"
 			VALUE "FileVersion", APP_VERSION_STRD
-			VALUE "InternalName", "Metamod-r"
-			VALUE "LegalCopyright", "Copyright (c) 2017"
+			VALUE "InternalName", "Metamod-FWGS"
+			VALUE "LegalCopyright", "Copyright (c) 2025"
 			VALUE "OriginalFilename", "metamod_mm.dll"
 			VALUE "ProductName", "Metamod"
 			VALUE "ProductVersion", APP_VERSION_STRD

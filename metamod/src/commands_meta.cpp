@@ -114,9 +114,9 @@ void cmd_meta_version()
 		return;
 	}
 
-	META_CONS("Metamod-r v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
-	META_CONS("Metamod-r build: " __TIME__ " " __DATE__ "");
-	META_CONS("Metamod-r from: " APP_COMMIT_URL APP_COMMIT_SHA "");
+	META_CONS("Metamod-FWGS v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
+	META_CONS("Metamod-FWGS build: " __TIME__ " " __DATE__ "");
+	META_CONS("Metamod-FWGS from: " APP_COMMIT_URL APP_COMMIT_SHA "");
 }
 
 // "meta version" client command.
@@ -127,30 +127,30 @@ void client_meta_version(edict_t *pEntity)
 		return;
 	}
 
-	META_CONS("Metamod-r v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
-	META_CONS("Metamod-r build: " __TIME__ " " __DATE__ "");
-	META_CONS("Metamod-r from: " APP_COMMIT_URL APP_COMMIT_SHA "");
+	META_CONS("Metamod-FWGS v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
+	META_CONS("Metamod-FWGS build: " __TIME__ " " __DATE__ "");
+	META_CONS("Metamod-FWGS from: " APP_COMMIT_URL APP_COMMIT_SHA "");
 }
 
 // "meta gpl" console command.
 void cmd_meta_gpl()
 {
-	META_CONS("Metamod-r version " __TIME__ " " __DATE__);
-	META_CONS("Copyright (c) 2016-2017 ReHlds Team (rebuild of original Metamod by Will Day)");
+	META_CONS("Metamod-FWGS version " __TIME__ " " __DATE__);
+	META_CONS("Copyright (c) 2025 Flying With Gauss Team (rebuild of original Metamod by Will Day)");
 	META_CONS("");
-	META_CONS("   Metamod-r is free software; you can redistribute it and/or");
+	META_CONS("   Metamod-FWGS is free software; you can redistribute it and/or");
 	META_CONS("   modify it under the terms of the GNU General Public License");
 	META_CONS("   as published by the Free Software Foundation; either");
 	META_CONS("   version 2 of the License, or (at your option) any later");
 	META_CONS("   version.");
 	META_CONS("   ");
-	META_CONS("   Metamod-r is distributed in the hope that it will be useful,");
+	META_CONS("   Metamod-FWGS is distributed in the hope that it will be useful,");
 	META_CONS("   but WITHOUT ANY WARRANTY; without even the implied warranty");
 	META_CONS("   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 	META_CONS("   See the GNU General Public License for more details.");
 	META_CONS("   ");
 	META_CONS("   You should have received a copy of the GNU General Public");
-	META_CONS("   License along with Metamod-r; if not, write to the Free");
+	META_CONS("   License along with Metamod-FWGS; if not, write to the Free");
 	META_CONS("   Software Foundation, Inc., 59 Temple Place, Suite 330,");
 	META_CONS("   Boston, MA 02111-1307  USA");
 	META_CONS("   ");
