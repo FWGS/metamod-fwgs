@@ -403,9 +403,6 @@ bool meta_load_gamedll()
 		return false;
 	}
 
-	// prepare meta_engfuncs
-	compile_engine_callbacks();
-
 	// Used to only pass our table of engine funcs if a loaded plugin
 	// wanted to catch one of the functions, but now that plugins are
 	// dynamically loadable at any time, we have to always pass our table,
@@ -534,8 +531,6 @@ void meta_rebuild_callbacks()
 #endif
 
 	g_jit.clear_callbacks();
-
-	compile_engine_callbacks();
 
 	if (fixdata.size()) {
 		META_LOG("dll: Begin callbacks fixing...");
