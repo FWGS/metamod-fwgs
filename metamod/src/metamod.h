@@ -145,3 +145,226 @@ void meta_rebuild_callbacks();
 // couldn't seem to generalize the two into a form that the compiler would
 // accept.  Thus there are "_void" versions of the 5 macros; these are
 // listed first.
+
+// macros for void-returning functions
+
+// declare/init some variables
+#define SETUP_API_CALLS_void(FN_TYPE, pfnName, api_info_table) \
+	META_RES mres = MRES_UNSET, status = MRES_UNSET, prev_mres = MRES_UNSET; \
+	FN_TYPE pfn_routine = NULL; \
+	int loglevel = api_info_table.pfnName.loglevel; \
+	const char *pfn_string = api_info_table.pfnName.name; \
+	meta_globals_t backup_meta_globals; \
+	/* fix bug with metamod-bot-plugins (hullu)*/ \
+	if (g_CALL_API_count++>0) \
+		/* backup g_metaGlobals */ \
+		backup_meta_globals = g_metaGlobals;
+
+// call each plugin
+#define CALL_PLUGIN_API_void(post, pfnName, pfn_args, api_table) \
+	prev_mres = MRES_UNSET; \
+	for (MPlugin *iplug : *g_plugins->getPlugins()) { \
+		if (iplug->status() != PL_RUNNING) \
+			continue; \
+		if (iplug->api_table && (pfn_routine = iplug->api_table->pfnName)); \
+		else \
+			/* plugin doesn't provide this function */  \
+			continue; \
+		/* initialize g_metaGlobals */ \
+		g_metaGlobals.mres = MRES_UNSET; \
+		g_metaGlobals.prev_mres = prev_mres; \
+		g_metaGlobals.status = status; \
+		/* call plugin */ \
+		META_DEBUG(loglevel, ("Calling %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":""))); \
+		pfn_routine pfn_args; \
+		/* plugin's result code */ \
+		mres = g_metaGlobals.mres; \
+		if (mres > status) \
+			status = mres; \
+		/* save this for successive plugins to see */ \
+		prev_mres = mres; \
+		if (mres == MRES_UNSET) \
+			META_ERROR("Plugin didn't set meta_result: %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":"")); \
+		if (post && mres == MRES_SUPERCEDE) \
+			META_ERROR("MRES_SUPERCEDE not valid in Post functions: %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":"")); \
+	}
+
+// call "real" function, from gamedll
+#define CALL_GAME_API_void(pfnName, pfn_args, api_table) \
+	g_CALL_API_count--; \
+	if (status == MRES_SUPERCEDE) { \
+		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", g_GameDLL.file, pfn_string)); \
+		/* don't return here; superceded game routine, but still allow \
+		 * _post routines to run. \
+		 */ \
+	} \
+	else if (g_GameDLL.funcs.api_table) { \
+		pfn_routine = g_GameDLL.funcs.api_table->pfnName; \
+		if (pfn_routine) { \
+			META_DEBUG(loglevel, ("Calling %s:%s()", g_GameDLL.file, pfn_string)); \
+			pfn_routine pfn_args; \
+		} \
+		/* don't complain for NULL routines in NEW_DLL_FUNCTIONS  */ \
+		else if ((void *)g_GameDLL.funcs.api_table != (void *)g_GameDLL.funcs.newapi_table) { \
+			META_ERROR("Couldn't find api call: %s:%s", g_GameDLL.file, pfn_string); \
+			status = MRES_UNSET; \
+		} \
+	} \
+	else { \
+		META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", g_GameDLL.file, pfn_string)); \
+	} \
+	g_CALL_API_count++;
+
+// call "real" function, from engine
+#define CALL_ENGINE_API_void(pfnName, pfn_args) \
+	g_CALL_API_count--; \
+	if (status == MRES_SUPERCEDE) { \
+		META_DEBUG(loglevel, ("Skipped (supercede) engine:%s()", pfn_string)); \
+		/* don't return here; superceded game routine, but still allow \
+		 * _post routines to run. \
+		 */ \
+	} \
+	else { \
+		pfn_routine = g_engine.funcs->pfnName; \
+		if (pfn_routine) { \
+			META_DEBUG(loglevel, ("Calling engine:%s()", pfn_string)); \
+			pfn_routine pfn_args; \
+		} \
+		else { \
+			META_ERROR("Couldn't find api call: engine:%s", pfn_string); \
+			status = MRES_UNSET; \
+		} \
+	} \
+	g_CALL_API_count++;
+
+// return (void)
+#define RETURN_API_void() \
+	if (--g_CALL_API_count>0) \
+		/*restore backup*/ \
+		g_metaGlobals = backup_meta_globals; \
+	return;
+
+
+// macros for type-returning functions
+// declare/init some variables
+
+#define SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, api_info_table) \
+	int i; \
+	ret_t dllret = ret_init; \
+	ret_t override_ret = ret_init; \
+	ret_t pub_override_ret = ret_init; \
+	ret_t orig_ret = ret_init; \
+	ret_t pub_orig_ret = ret_init; \
+	META_RES mres = MRES_UNSET, status = MRES_UNSET, prev_mres = MRES_UNSET; \
+	FN_TYPE pfn_routine = NULL; \
+	int loglevel = api_info_table.pfnName.loglevel; \
+	const char *pfn_string = api_info_table.pfnName.name; \
+	meta_globals_t backup_meta_globals; \
+	/*Fix bug with metamod-bot-plugins*/ \
+	if (CALL_API_count++>0) \
+		/*Backup g_metaGlobals*/ \
+		backup_meta_globals = g_metaGlobals;
+
+// call each plugin
+#define CALL_PLUGIN_API(post, ret_init, pfnName, pfn_args, MRES_TYPE, api_table) \
+	override_ret = ret_init; \
+	prev_mres = MRES_UNSET; \
+	  for (MPlugin *iplug : *g_plugins->getPlugins()) { \
+		if (iplug->status() != PL_RUNNING) \
+			continue; \
+		if (iplug->api_table && (pfn_routine = iplug->api_table->pfnName)); \
+		else \
+			/* plugin doesn't provide this function */  \
+			continue; \
+		/* initialize g_metaGlobals */ \
+		g_metaGlobals.mres = MRES_UNSET; \
+		g_metaGlobals.prev_mres = prev_mres; \
+		g_metaGlobals.status = status; \
+		pub_orig_ret = orig_ret; \
+		g_metaGlobals.orig_ret = &pub_orig_ret; \
+		if (status == MRES_TYPE) { \
+			pub_override_ret = override_ret; \
+			g_metaGlobals.override_ret = &pub_override_ret; \
+		} \
+		/* call plugin */ \
+		META_DEBUG(loglevel, ("Calling %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":""))); \
+		dllret = pfn_routine pfn_args; \
+		/* plugin's result code */ \
+		mres = g_metaGlobals.mres; \
+		if (mres > status) \
+			status = mres; \
+		/* save this for successive plugins to see */ \
+		prev_mres = mres; \
+		if (mres == MRES_TYPE) \
+			override_ret = pub_override_ret = dllret; \
+		else if (mres == MRES_UNSET) \
+			META_ERROR("Plugin didn't set meta_result: %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":"")); \
+		else if (post && mres == MRES_SUPERCEDE) \
+			META_ERROR("MRES_SUPERCEDE not valid in Post functions: %s:%s%s()", iplug->file(), pfn_string, (post?"_Post":"")); \
+	}
+
+// call "real" function, from gamedll
+#define CALL_GAME_API(pfnName, pfn_args, api_table) \
+	g_CALL_API_count--; \
+	if (status == MRES_SUPERCEDE) { \
+		META_DEBUG(loglevel, ("Skipped (supercede) %s:%s()", g_GameDLL.file, pfn_string)); \
+		orig_ret = pub_orig_ret = override_ret; \
+		g_metaGlobals.orig_ret = &pub_orig_ret; \
+		/* don't return here; superceded game routine, but still allow \
+		 * _post routines to run. \
+		 */ \
+	} \
+	else if (g_GameDLL.funcs.api_table) { \
+		pfn_routine = g_GameDLL.funcs.api_table->pfnName; \
+		if (pfn_routine) { \
+			META_DEBUG(loglevel, ("Calling %s:%s()", g_GameDLL.file, pfn_string)); \
+			dllret = pfn_routine pfn_args; \
+			orig_ret = dllret; \
+		} \
+		/* don't complain for NULL routines in NEW_DLL_FUNCTIONS  */ \
+		else if ((void *)g_GameDLL.funcs.api_table != (void *)g_GameDLL.funcs.newapi_table) { \
+			META_ERROR("Couldn't find api call: %s:%s", g_GameDLL.file, pfn_string); \
+			status = MRES_UNSET; \
+		} \
+	} \
+	else { \
+		META_DEBUG(loglevel, ("No api table defined for api call: %s:%s", g_GameDLL.file, pfn_string)); \
+	} \
+	g_CALL_API_count++;
+
+// call "real" function, from engine
+#define CALL_ENGINE_API(pfnName, pfn_args) \
+	g_CALL_API_count--; \
+	if (status == MRES_SUPERCEDE) { \
+		META_DEBUG(loglevel, ("Skipped (supercede) engine:%s()", pfn_string)); \
+		orig_ret = pub_orig_ret = override_ret; \
+		g_metaGlobals.orig_ret = &pub_orig_ret; \
+		/* don't return here; superceded game routine, but still allow \
+		 * _post routines to run. \
+		 */ \
+	} \
+	else { \
+		pfn_routine = g_engine.funcs->pfnName; \
+		if (pfn_routine) { \
+			META_DEBUG(loglevel, ("Calling engine:%s()", pfn_string)); \
+			dllret = pfn_routine pfn_args; \
+			orig_ret = dllret; \
+		} \
+		else { \
+			META_ERROR("Couldn't find api call: engine:%s", pfn_string); \
+			status = MRES_UNSET; \
+		} \
+	} \
+	g_CALL_API_count++;
+
+// return a value
+#define RETURN_API() \
+	if (--g_CALL_API_count>0) \
+		/*Restore backup*/ \
+		g_metaGlobals = backup_meta_globals; \
+	if (status == MRES_OVERRIDE) { \
+		META_DEBUG(loglevel, ("Returning (override) %s()", pfn_string)); \
+		return override_ret; \
+	} \
+	else \
+		return orig_ret;

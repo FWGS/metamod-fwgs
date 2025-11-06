@@ -1,5 +1,34 @@
 #include "precompiled.h"
 
+// Original DLL routines, functions returning "void".
+#define META_DLLAPI_HANDLE_void(FN_TYPE, pfnName, pfn_args) \
+	SETUP_API_CALLS_void(FN_TYPE, pfnName, g_dllapi_info); \
+	CALL_PLUGIN_API_void(P_PRE, pfnName, pfn_args, m_dllapi_table); \
+	CALL_GAME_API_void(pfnName, pfn_args, dllapi_table); \
+	CALL_PLUGIN_API_void(P_POST, pfnName, pfn_args, m_dllapi_post_table);
+
+// Original DLL routines, functions returning an actual value.
+#define META_DLLAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pfn_args) \
+	SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, g_dllapi_info); \
+	CALL_PLUGIN_API(P_PRE, ret_init, pfnName, pfn_args, MRES_SUPERCEDE, m_dllapi_table); \
+	CALL_GAME_API(pfnName, pfn_args, dllapi_table); \
+	CALL_PLUGIN_API(P_POST, ret_init, pfnName, pfn_args, MRES_OVERRIDE, m_dllapi_post_table);
+
+
+// The "new" api routines (just 3 right now), functions returning "void".
+#define META_NEWAPI_HANDLE_void(FN_TYPE, pfnName, pfn_args) \
+	SETUP_API_CALLS_void(FN_TYPE, pfnName, g_newapi_info); \
+	CALL_PLUGIN_API_void(P_PRE, pfnName, pfn_args, m_newapi_table); \
+	CALL_GAME_API_void(pfnName, pfn_args, m_newapi_table); \
+	CALL_PLUGIN_API_void(P_POST, pfnName, pfn_args, m_newapi_post_table);
+
+// The "new" api routines (just 3 right now), functions returning an actual value.
+#define META_NEWAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pfn_args) \
+	SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, g_newapi_info); \
+	CALL_PLUGIN_API(P_PRE, ret_init, pfnName, pfn_args, MRES_SUPERCEDE, m_newapi_table); \
+	CALL_GAME_API(pfnName, pfn_args, m_newapi_table); \
+	CALL_PLUGIN_API(P_POST, ret_init, pfnName, pfn_args, MRES_OVERRIDE, m_newapi_post_table);
+
 #define CDATA_DLL_H(x, p, h)    CDATA_ENTRY(DLL_FUNCTIONS, x, p, size_t(h))
 #define CDATA_DLL(x)            CDATA_ENTRY(DLL_FUNCTIONS, x, P_PRE, 0u)
 #define CDATA_NEWDLL_H(x, p, h) CDATA_ENTRY(NEW_DLL_FUNCTIONS, x, p, size_t(h))
@@ -39,11 +68,15 @@ void MM_PRE_HOOK mm_ClientCommand(edict_t *pEntity)
 	if (!Q_strcmp(CMD_ARGV(0), "meta")) {
 		client_meta(pEntity);
 	}
+
+	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, (pEntity));
+	RETURN_API_void();
 }
 
 void EXT_FUNC mm_ServerDeactivate()
 {
-	sFunctionTable_jit.pfnServerDeactivate();
+	//sFunctionTable_jit.pfnServerDeactivate();
+	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, ());
 
 	// Update loaded plugins.  Look for new plugins in inifile, as well as
 	// any plugins waiting for a changelevel to load.
@@ -64,7 +97,7 @@ void EXT_FUNC mm_ServerDeactivate()
 	g_players.clear_all_cvar_queries();
 	g_requestid_counter = 0;
 
-	/* RETURN TO ENGINE */
+	RETURN_API_void();
 }
 
 compile_data_t g_dllfunc_cdata[] =
@@ -305,6 +338,7 @@ void compile_gamedll_tramps()
 
 	// use direct hook to prevent crash after callbacks rebuilding
 	sFunctionTable.pfnServerDeactivate = mm_ServerDeactivate;
+	sFunctionTable.pfnClientCommand = mm_ClientCommand;
 
 	for (auto& cd : g_newdllfunc_cdata) {
 		*(size_t *)(size_t(&sNewFunctionTable) + cd.offset) = g_jit.compile_tramp(size_t(&sNewFunctionTable_jit) + cd.offset);
