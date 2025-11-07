@@ -1,99 +1,7 @@
-#----------------------------------------
-# 1. Preparing build:
-#    rm -rf build
-#    mkdir build && cd build
-#
-# 2. Select compiler and build it
-# - Compile with Clang:
-#    CC="clang" CXX="clang++" cmake ..
-#    make
-#
-# - Compile with Intel C++ Compiler:
-#    CC="icc" CXX="icpc" cmake ..
-#    make
-#
-# - Compile with GCC Compiler:
-#    cmake ..
-#    make
-#
-# Use -DCMAKE_BUILD_TYPE=COMPAT_GLIBC
-# to backward compatibility with oldest version of glibc 2.11
-#
-#----------------------------------------
-
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(metamod CXX)
 
-option(DEBUG "Build with debug information." OFF)
-option(USE_STATIC_LIBSTDC "Enables static linking libstdc++." OFF)
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Avoid -rdynamic -fPIC options
-set(CMAKE_SHARED_LIBRARY_CXX_FLAGS "")
-set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
-
-set(COMPILE_FLAGS "-m32 -U_FORTIFY_SOURCE")
-set(LINK_FLAGS "-m32")
-
-set(COMPILE_FLAGS "${COMPILE_FLAGS} -Wall -fno-exceptions -fno-builtin -Wno-unknown-pragmas")
-
-# Remove noxref code and data
-set(COMPILE_FLAGS "${COMPILE_FLAGS} -ffunction-sections -fdata-sections")
-
-if (DEBUG)
-	set(COMPILE_FLAGS "${COMPILE_FLAGS} -g3 -O0 -ggdb")
-else()
-	set(COMPILE_FLAGS "${COMPILE_FLAGS} -g0 -O3 -fno-stack-protector")
-	set(LINK_FLAGS "${LINK_FLAGS} -s")
-endif()
-
-# Check Intel C++ compiler
-if ("$ENV{CXX}" MATCHES "icpc")
-	set(COMPILE_FLAGS "${COMPILE_FLAGS} \
-		-fasm-blocks -Qoption,cpp,--treat_func_as_string_literal_cpp\
-		-inline-forceinline -no-ansi-alias")
-
-	set(LINK_FLAGS "${LINK_FLAGS} -static-intel -no-intel-extensions")
-
-	if (NOT DEBUG)
-		set(COMPILE_FLAGS "${COMPILE_FLAGS} -ipo")
-		set(LINK_FLAGS "${LINK_FLAGS} -ipo -diag-disable=11003")
-	endif()
-else()
-	# Produce code optimized for the most common IA32/AMD64/EM64T processors.
-	# As new processors are deployed in the marketplace, the behavior of this option will change.
-	set(COMPILE_FLAGS "${COMPILE_FLAGS} \
-		-mtune=generic -msse3\
-		-fno-sized-deallocation -Wno-invalid-offsetof -Wno-ignored-attributes\
-		-Wno-write-strings -Wno-strict-aliasing -fno-plt")
-
-	# Check Clang compiler
-	if (NOT "$ENV{CXX}" MATCHES "clang")
-		set(COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-maybe-uninitialized -Wno-unused-but-set-variable")
-
-		# GCC >= 8.3
-		if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
-			set(COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-stringop-truncation -Wno-format-truncation -Wno-class-memaccess")
-		endif()
-	endif()
-endif()
-
-# GCC >= 8.3
-if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
-	set(COMPILE_FLAGS "${COMPILE_FLAGS} -fcf-protection=none")
-endif()
-
-if (NOT DEBUG)
-	set(LINK_FLAGS "${LINK_FLAGS} \
-		-Wl,-gc-sections -Wl,--version-script=\"${PROJECT_SOURCE_DIR}/../version_script.lds\"")
-endif()
-
-if (CMAKE_BUILD_TYPE MATCHES COMPAT_GLIBC)
-	set(LINK_FLAGS	"${LINK_FLAGS} -Wl,--wrap=stat64")
-endif()
-
+# Source/include directories
 set(PROJECT_SRC_DIR
 	"${PROJECT_SOURCE_DIR}"
 	"${PROJECT_SOURCE_DIR}/src"
@@ -110,47 +18,15 @@ set(PROJECT_PUBLIC_DIR
 	"${PROJECT_SOURCE_DIR}/include/public/metamod"
 )
 
-add_library(metamod SHARED ${appversion.sh})
-
-if (NOT TARGET appversion)
-	add_custom_target(appversion DEPENDS COMMAND "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}/..")
-endif()
-
-add_dependencies(metamod appversion)
-
-target_include_directories(metamod PRIVATE
-	${PROJECT_SRC_DIR}
-	${PROJECT_PUBLIC_DIR}
-)
-
-target_compile_definitions(metamod PRIVATE
-	_LINUX
-	LINUX
-	NDEBUG
-	METAMOD_CORE
-	_GLIBCXX_USE_CXX11_ABI=0
-	_stricmp=strcasecmp
-	_strnicmp=strncasecmp
-	_strdup=strdup
-	_unlink=unlink
-	_write=write
-	_close=close
-	_getcwd=getcwd
-	_vsnprintf=vsnprintf
-	_vsnwprintf=vswprintf
-	_snprintf=snprintf
-)
-
-target_sources(metamod PRIVATE
+# Collect sources
+set(METAMOD_SOURCES
 	"src/api_info.cpp"
-	"src/callback_jit.cpp"
 	"src/commands_meta.cpp"
 	"src/conf_meta.cpp"
 	"src/dllapi.cpp"
 	"src/engine_api.cpp"
 	"src/game_support.cpp"
 	"src/h_export.cpp"
-	"src/osdep_linkent_linux.cpp"
 	"src/log_meta.cpp"
 	"src/mdebug.cpp"
 	"src/mem_utils.cpp"
@@ -172,27 +48,182 @@ target_sources(metamod PRIVATE
 	"src/glibc_compat.cpp"
 )
 
-target_link_libraries(metamod PRIVATE
-	dl
-	pthread
-	$<$<CONFIG:COMPAT_GLIBC>:libc-2.11.1.so>
-)
-
-if (USE_STATIC_LIBSTDC)
-	target_compile_definitions(metamod PRIVATE BUILD_STATIC_LIBSTDC)
-	set(LINK_FLAGS "${LINK_FLAGS} -static-libgcc -static-libstdc++")
+if (WIN32)
+    list(APPEND METAMOD_SOURCES "src/osdep_linkent_win32.cpp")
+else()
+    list(APPEND METAMOD_SOURCES "src/osdep_linkent_linux.cpp")
 endif()
 
-if (CMAKE_BUILD_TYPE MATCHES COMPAT_GLIBC)
-	set(LINK_FLAGS "${LINK_FLAGS} \
-		-Wl,-rpath,'$ORIGIN/.' \
-		-L${PROJECT_SOURCE_DIR}/lib/linux32")
+# required for ABI compatibility
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	list(APPEND METAMOD_SOURCES "msvc/metamod.rc")
+	list(APPEND METAMOD_SOURCES "msvc/metamod.def")
+endif()
+
+add_library(metamod SHARED ${METAMOD_SOURCES})
+set(APPVERSION_HEADER "${PROJECT_SOURCE_DIR}/version/appversion.h")
+
+if (WIN32)
+    set(MSVC_PREBUILD "${PROJECT_SOURCE_DIR}/msvc/PreBuild.bat")
+    set(MSVC_POSTBUILD "${PROJECT_SOURCE_DIR}/msvc/PostBuild.bat")
+
+    if (EXISTS "${MSVC_PREBUILD}")
+        # Convert to native Windows paths
+        file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
+        file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/version" MSVC_VERSION_NATIVE)
+        file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}" MSVC_ROOT_NATIVE)
+
+        add_custom_command(OUTPUT ${APPVERSION_HEADER}
+            COMMAND ${CMAKE_COMMAND} -E echo "Running PreBuild.bat"
+            COMMAND cmd /C call "${MSVC_PREBUILD_NATIVE}" "${MSVC_VERSION_NATIVE}" "${MSVC_ROOT_NATIVE}"
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/msvc"
+            COMMENT "Generating application version files (msvc PreBuild)"
+            VERBATIM
+        )
+
+        add_custom_target(appversion_prebuild DEPENDS ${APPVERSION_HEADER})
+        add_dependencies(metamod appversion_prebuild)
+    endif()
+
+    if (EXISTS "${MSVC_POSTBUILD}")
+        file(TO_NATIVE_PATH "${MSVC_POSTBUILD}" MSVC_POSTBUILD_NATIVE)
+
+        add_custom_command(TARGET metamod POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Running PostBuild.bat"
+            COMMAND cmd /C call "${MSVC_POSTBUILD_NATIVE}" "$<TARGET_FILE_DIR:metamod>" "$<TARGET_FILE_NAME:metamod>" "$<TARGET_FILE_SUFFIX:metamod>" "${PROJECT_SOURCE_DIR}"
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/msvc"
+            COMMENT "Running msvc PostBuild script"
+            VERBATIM
+        )
+    endif()
+else()
+    if (EXISTS "${PROJECT_SOURCE_DIR}/version/appversion.sh")
+        add_custom_command(OUTPUT ${APPVERSION_HEADER}
+            COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" sh "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}"
+            COMMENT "Generating application version files (sh)"
+            VERBATIM
+        )
+        add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
+        add_dependencies(metamod appversion)
+    endif()
+endif()
+
+
+target_include_directories(metamod PRIVATE
+	${PROJECT_SRC_DIR}
+	${PROJECT_PUBLIC_DIR}
+)
+
+# Compiler-specific and platform-specific flags
+set(METAMOD_COMPILE_OPTIONS "")
+set(METAMOD_LINK_OPTIONS "")
+
+if (MSVC)
+    # MSVC sensible defaults
+    list(APPEND METAMOD_COMPILE_OPTIONS /W3 /EHsc)
+    # Avoid C runtime warnings
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+else()
+    # GCC / Clang common options
+    list(APPEND METAMOD_COMPILE_OPTIONS -Wall -Wextra -Wno-unused-parameter -fno-exceptions -fno-builtin -Wno-unknown-pragmas)
+
+    # Try to enable some optimizations and sane defaults
+    if (DEBUG)
+        list(APPEND METAMOD_COMPILE_OPTIONS -g3 -O0 -ggdb)
+    else()
+        list(APPEND METAMOD_COMPILE_OPTIONS -g0 -O3 -fno-stack-protector)
+        list(APPEND METAMOD_LINK_OPTIONS -s)
+    endif()
+
+    # Architecture/processor tuning - leave conservative default
+    list(APPEND METAMOD_COMPILE_OPTIONS -mtune=generic -msse3)
+
+    # Compiler specific tweaks
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
+            list(APPEND METAMOD_COMPILE_OPTIONS -Wno-stringop-truncation -Wno-format-truncation -Wno-class-memaccess -fcf-protection=none)
+        endif()
+        list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized -Wno-unused-but-set-variable)
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Clang specific adjustments can go here
+        list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized)
+    endif()
+
+    # Position independent code for shared libraries on non-Windows
+    set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+# Apply compile and link options
+target_compile_options(metamod PRIVATE ${METAMOD_COMPILE_OPTIONS})
+# target_link_options requires CMake >= 3.13, but most modern envs have it; guard just in case
+if (POLICY CMP0079)
+    cmake_policy(SET CMP0079 NEW)
+endif()
+if (COMMAND target_link_options)
+    target_link_options(metamod PRIVATE ${METAMOD_LINK_OPTIONS})
+else()
+    # Fallback to setting property
+    set_target_properties(metamod PROPERTIES LINK_FLAGS "${METAMOD_LINK_OPTIONS}")
+endif()
+
+# MSVC: add configuration-specific flags using generator expressions to avoid conflicts such as /RTC1 vs /O2
+if (MSVC)
+    # Use /RTC1 only for Debug configuration; avoid it for Release where /O2 is used
+    target_compile_options(metamod PRIVATE
+        $<$<CONFIG:Debug>:/Zi;/Od;/RTC1>
+        $<$<NOT:$<CONFIG:Debug>>:/O2>
+    )
+endif()
+
+if (UNIX)
+    target_link_libraries(metamod PRIVATE dl pthread)
+elseif (WIN32)
+    target_link_libraries(metamod PRIVATE psapi)
+endif()
+
+if (USE_STATIC_LIBSTDC)
+    target_compile_definitions(metamod PRIVATE BUILD_STATIC_LIBSTDC)
+    if (NOT MSVC)
+        list(APPEND METAMOD_LINK_OPTIONS -static-libgcc -static-libstdc++)
+        if (COMMAND target_link_options)
+            target_link_options(metamod PRIVATE -static-libgcc -static-libstdc++)
+        else()
+            set_target_properties(metamod PROPERTIES LINK_FLAGS "${METAMOD_LINK_OPTIONS}")
+        endif()
+    endif()
+endif()
+
+target_compile_definitions(metamod PRIVATE
+    METAMOD_CORE
+)
+
+if (WIN32)
+    target_compile_definitions(metamod PRIVATE _WINDOWS)
+else()
+    # map Windows string functions to POSIX equivalents
+    target_compile_definitions(metamod PRIVATE
+        _LINUX
+        LINUX
+        _GLIBCXX_USE_CXX11_ABI=0
+        _stricmp=strcasecmp
+        _strnicmp=strncasecmp
+        _strdup=strdup
+        _unlink=unlink
+        _write=write
+        _close=close
+        _getcwd=getcwd
+        _vsnprintf=vsnprintf
+        _vsnwprintf=vswprintf
+        _snprintf=snprintf
+    )
+endif()
+
+# NDEBUG in release mode
+if (NOT DEBUG)
+    target_compile_definitions(metamod PRIVATE NDEBUG)
 endif()
 
 set_target_properties(metamod PROPERTIES
-	OUTPUT_NAME metamod_i386
-	PREFIX ""
-	COMPILE_FLAGS ${COMPILE_FLAGS}
-	LINK_FLAGS ${LINK_FLAGS}
-	POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME metamod
+    PREFIX ""
 )

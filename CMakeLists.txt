@@ -1,12 +1,119 @@
-cmake_minimum_required(VERSION 3.6)
-project(metamod CXX)
+cmake_minimum_required(VERSION 3.10)
 
-if (WIN32)
-	message(FATAL_ERROR "CMakeLists.txt Windows platform isn't supported yet. Use msvc/metamod.sln instead it!")
+project(metamod LANGUAGES C CXX)
+
+# Project-wide options
+option(DEBUG "Build with debug information." OFF)
+option(USE_STATIC_LIBSTDC "Enables static linking libstdc++." OFF)
+option(BUILD_EXAMPLE "Build example plugin (if available)" OFF)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Default to Release if not specified for single-config generators
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "No build type specified. Defaulting to Release.")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-add_custom_target(appversion DEPENDS
-	COMMAND "${PROJECT_SOURCE_DIR}/metamod/version/appversion.sh" "${PROJECT_SOURCE_DIR}"
-)
+# Detect platform and compiler
+if(WIN32)
+  set(TARGET_PLATFORM "Windows")
+else()
+  set(TARGET_PLATFORM "Unix")
+endif()
 
-add_subdirectory(metamod)
+if(MSVC)
+  set(TARGET_COMPILER "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(TARGET_COMPILER "Clang")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(TARGET_COMPILER "GCC")
+else()
+  set(TARGET_COMPILER "Unknown")
+endif()
+
+message(STATUS "Configuring for ${TARGET_PLATFORM} using ${TARGET_COMPILER}")
+
+# Basic compiler flags per toolchain (kept conservative; subprojects can extend)
+if(MSVC)
+  add_compile_options(/W3 /EHsc)
+else()
+  # Common sane defaults for GCC/Clang
+  add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+  # Ensure position-independent code when building shared libs on Unix
+  if(NOT WIN32)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  endif()
+endif()
+
+# Expose options to subdirectories
+set(DEBUG ${DEBUG} CACHE BOOL "Build with debug information.")
+set(USE_STATIC_LIBSTDC ${USE_STATIC_LIBSTDC} CACHE BOOL "Enables static linking libstdc++.")
+set(BUILD_EXAMPLE ${BUILD_EXAMPLE} CACHE BOOL "Build example plugin (if available)")
+
+# Appversion target: run platform-specific script if present
+set(APPVERSION_SH "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
+set(APPVERSION_BAT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.bat")
+set(APPVERSION_PS1 "${CMAKE_SOURCE_DIR}/metamod/version/appversion.ps1")
+
+if(EXISTS "${APPVERSION_SH}" AND NOT WIN32)
+  add_custom_target(appversion
+    COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" sh "${APPVERSION_SH}" "${CMAKE_SOURCE_DIR}"
+    COMMENT "Generating application version files (sh)"
+    VERBATIM
+  )
+elseif(EXISTS "${APPVERSION_BAT}" AND WIN32)
+  add_custom_target(appversion
+    COMMAND cmd /C "\"${APPVERSION_BAT}\" \"${CMAKE_SOURCE_DIR}\""
+    COMMENT "Generating application version files (bat)"
+    VERBATIM
+  )
+elseif(EXISTS "${APPVERSION_PS1}" AND WIN32)
+  add_custom_target(appversion
+    COMMAND powershell -ExecutionPolicy Bypass -File "${APPVERSION_PS1}" "${CMAKE_SOURCE_DIR}"
+    COMMENT "Generating application version files (powershell)"
+    VERBATIM
+  )
+else()
+  message(STATUS "No appversion script found; skipping appversion target")
+endif()
+
+# Add main metamod directory
+if(EXISTS "${CMAKE_SOURCE_DIR}/metamod/CMakeLists.txt")
+  add_subdirectory(metamod)
+else()
+  message(FATAL_ERROR "Required subdirectory 'metamod' not found")
+endif()
+
+# Optionally build example plugin (use CMakeLists in example if present, otherwise try existing Makefile)
+if(BUILD_EXAMPLE)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/metamod/extra/example/CMakeLists.txt")
+    add_subdirectory(metamod/extra/example)
+  elseif(EXISTS "${CMAKE_SOURCE_DIR}/metamod/extra/example/Makefile")
+    add_custom_target(example
+      COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_SOURCE_DIR}/metamod/extra/example" ${CMAKE_MAKE_PROGRAM}
+      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/metamod/extra/example"
+      COMMENT "Building example plugin using the provided Makefile"
+    )
+  else()
+    message(STATUS "No example build files found under metamod/extra/example")
+  endif()
+endif()
+
+# Install rules for metamod target if available
+if(TARGET metamod)
+  install(TARGETS metamod
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+  )
+endif()
+
+# Helpful summary
+message(STATUS "Configuration summary:")
+message(STATUS "  Source dir: ${CMAKE_SOURCE_DIR}")
+message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  DEBUG option: ${DEBUG}")
+message(STATUS "  USE_STATIC_LIBSTDC option: ${USE_STATIC_LIBSTDC}")
+message(STATUS "  BUILD_EXAMPLE option: ${BUILD_EXAMPLE}")
