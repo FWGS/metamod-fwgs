@@ -235,13 +235,6 @@ void metamod_startup()
 		if (!g_meta_extdll.init(&g_engine.sys_module)) {
 			Sys_Error("Failure to init extension DLL; exiting...");
 		}
-	} else {
-		// activate linkent-replacement after give_engfuncs so that if game dll is
-		// plugin too and uses same method we get combined export table of plugin
-		// and game dll
-		if (!meta_init_linkent_replacement(&g_metamod_module, &g_GameDLL.sys_module)) {
-			Sys_Error("dll: Couldn't load linkent replacement for game DLL");
-		}
 	}
 
 	// Allow for commands to metamod plugins at startup.  Autoexec.cfg is

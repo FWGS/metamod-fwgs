@@ -48,12 +48,6 @@ set(METAMOD_SOURCES
 	"src/glibc_compat.cpp"
 )
 
-if (WIN32)
-    list(APPEND METAMOD_SOURCES "src/osdep_linkent_win32.cpp")
-else()
-    list(APPEND METAMOD_SOURCES "src/osdep_linkent_linux.cpp")
-endif()
-
 # required for ABI compatibility
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.rc")

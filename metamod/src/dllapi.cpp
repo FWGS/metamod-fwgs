@@ -560,10 +560,6 @@ C_DLLEXPORT int Server_GetPhysicsInterface(int iVersion, server_physics_api_t *p
 	if (iVersion != SV_PHYSICS_INTERFACE_VERSION || pfuncsFromEngine == nullptr || pFunctionTable == nullptr)
 		return FALSE;
 
-
-	// we have linkent alternative, shutdown linkent replacement
-	meta_shutdown_linkent_replacement();
-
 	// engine always require for nullptr, only replace single function needed for linkent alternative
 	Q_memset(pFunctionTable, 0, sizeof(*pFunctionTable));
 	pFunctionTable->SV_CreateEntity = [](edict_t *pent, const char *szName)
