@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "build_info.h"
 
 // Adapted from adminmod h_export.cpp:
 //! this structure contains a list of supported mods and their dlls names
@@ -108,9 +109,10 @@ const game_modinfo_t g_known_games[] = {
 };
 
 // Find a modinfo corresponding to the given game name.
-static const game_modinfo_t *lookup_game(const char *name)
+static const game_modinfo_t *lookup_game(const char *name, char *libname, size_t bufsize)
 {
 	char temp[MAX_PATH];
+	char purelib[MAX_PATH];
 
 	for (auto& known : g_known_games) {
 		if (known.name && !Q_stricmp(known.name, name)) {
@@ -122,9 +124,39 @@ static const game_modinfo_t *lookup_game(const char *name)
 			if (!knowndll)
 				continue;
 
+#if XASH_ARCHITECTURE == ARCHITECTURE_X86
 			Q_snprintf(temp, sizeof temp, "dlls/%s", knowndll);
 			if (is_file_exists_in_gamedir(temp))
+			{
+				Q_strncpy(libname, knowndll, bufsize);
 				return &known;
+			}
+#else
+			// extract pure library name (up to first '_' or '.')
+			const char* end = Q_strchr(knowndll, '_');
+			if (!end)
+				end = Q_strchr(knowndll, '.');
+
+			int purelen = end ? (end - knowndll) : Q_strlen(knowndll);
+			Q_strncpy(purelib, knowndll, purelen);
+			purelib[purelen] = '\0';
+
+			const char *ext = Q_strrchr(knowndll, '.');
+			if (!ext)
+				continue;
+			else {
+				ext += 1; // skip dot
+			}
+
+			// try library name constructed according to Xash3D library naming scheme
+			Q_snprintf(temp, sizeof temp, "dlls/%s_%s.%s", purelib, BuildInfo::GetArchitecture(), ext);
+			if (is_file_exists_in_gamedir(temp))
+			{
+				Q_snprintf(temp, sizeof temp, "%s_%s.%s", purelib, BuildInfo::GetArchitecture(), ext);
+				Q_strncpy(libname, temp, bufsize);
+				return &known;
+			}
+#endif
 		}
 	}
 
@@ -220,14 +252,11 @@ bool setup_gamedll(gamedll_t *gamedll)
 	bool override = false;
 	const game_modinfo_t *known;
 	const char *knownfn = nullptr;
+	char libname[MAX_PATH];
 
 	// First, look for a known game, based on gamedir.
-	if ((known = lookup_game(gamedll->name))) {
-#ifdef _WIN32
-		knownfn = known->win_dll;
-#else
-		knownfn = known->linux_so;
-#endif
+	if ((known = lookup_game(gamedll->name, libname, sizeof(libname)))) {
+		knownfn = libname;
 	}
 
 	// Use override-dll if specified.
