@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-project(metamod LANGUAGES C CXX)
+project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
 option(DEBUG "Build with debug information." OFF)
@@ -9,6 +10,16 @@ option(BUILD_EXAMPLE "Build example plugin (if available)" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Xash3D FWGS Library Naming Scheme compliance
+# see documentation: https://github.com/FWGS/xash3d-fwgs/blob/master/Documentation/extensions/library-naming.md
+include(LibraryNaming)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message(STATUS "Building for 64-bit")
+else()
+	message(STATUS "Building for 32-bit")
+endif()
 
 # Default to Release if not specified for single-config generators
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -110,9 +121,7 @@ if(TARGET metamod)
   )
 endif()
 
-# Helpful summary
 message(STATUS "Configuration summary:")
-message(STATUS "  Source dir: ${CMAKE_SOURCE_DIR}")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  DEBUG option: ${DEBUG}")
 message(STATUS "  USE_STATIC_LIBSTDC option: ${USE_STATIC_LIBSTDC}")

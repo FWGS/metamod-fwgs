@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(metamod CXX)
 
-# Source/include directories
-set(PROJECT_SRC_DIR
+set(PROJECT_HEADERS_DIR
 	"${PROJECT_SOURCE_DIR}"
 	"${PROJECT_SOURCE_DIR}/src"
 	"${PROJECT_SOURCE_DIR}/include/engine"
@@ -11,14 +10,9 @@ set(PROJECT_SRC_DIR
 	"${PROJECT_SOURCE_DIR}/include/game_shared"
 	"${PROJECT_SOURCE_DIR}/include/pm_shared"
 	"${PROJECT_SOURCE_DIR}/include/public"
+	"${CMAKE_SOURCE_DIR}/public"
 )
 
-set(PROJECT_PUBLIC_DIR
-	"${PROJECT_SOURCE_DIR}/include/public"
-	"${PROJECT_SOURCE_DIR}/include/public/metamod"
-)
-
-# Collect sources
 set(METAMOD_SOURCES
 	"src/api_info.cpp"
 	"src/commands_meta.cpp"
@@ -104,8 +98,7 @@ endif()
 
 
 target_include_directories(metamod PRIVATE
-	${PROJECT_SRC_DIR}
-	${PROJECT_PUBLIC_DIR}
+	${PROJECT_HEADERS_DIR}
 )
 
 # Compiler-specific and platform-specific flags
@@ -217,7 +210,5 @@ if (NOT DEBUG)
     target_compile_definitions(metamod PRIVATE NDEBUG)
 endif()
 
-set_target_properties(metamod PROPERTIES
-    OUTPUT_NAME metamod
-    PREFIX ""
-)
+# required for compliance with Xash3D FWGS library naming scheme
+set_target_postfix(metamod)
