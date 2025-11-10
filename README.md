@@ -1,67 +1,36 @@
 # Metamod-FWGS
 
-Fork of [Metamod-R](https://github.com/rehlds/metamod-r) for use with Xash3D FWGS engine on many different architectures. Original Metamod-R contains a lot of x86-only JIT optimizations, constrained by binary compatibility with ReHLDS and game libraries, and not flexible enough to be compatible with wide variety of compilers/toolchains and architectures.
+This is fork of [Metamod-R](https://github.com/rehlds/metamod-r) for use with Xash3D FWGS engine on many different architectures & platforms.
+
+Original Metamod-R contains a lot of x86 JIT optimizations, patching hacks, constrained by binary compatibility with ReHLDS and legacy game libraries, and not flexible enough to be compatible with wide variety of compilers/toolchains and architectures.
 
 ## Documentation
 
-* [Actual documentation](https://github.com/rehlds/metamod-r/wiki) in ![en](https://i.imgur.com/rm67tUZ.png) **English** and ![ru](https://i.imgur.com/ItziiKg.png) **Russian** languages
+* [Actual documentation](https://github.com/rehlds/metamod-r/wiki) (![en](https://i.imgur.com/rm67tUZ.png) **English** and ![ru](https://i.imgur.com/ItziiKg.png) **Russian**)
 * ![en](https://i.imgur.com/rm67tUZ.png) Actual [list of supported games](https://github.com/rehlds/metamod-r/wiki/Supported-games)
 * ![ru](https://i.imgur.com/ItziiKg.png) Актуальный [список поддерживаемых игр](https://github.com/rehlds/metamod-r/wiki/Поддерживаемые-игры)
 
 ## Build instructions
-### Checking requirements
+### Windows
 
-#### Windows
-```
-Visual Studio 2015 (C++14 standard) and later
-```
+#### Prerequisites
+Visual Studio 2015 (C++14 standard) and later. You can use Visual Studio 2019 or Visual Studio 2022 for best experience.
 
-#### Linux
-```
-git >= 1.8.5
-cmake >= 3.10
-GCC >= 4.9.2 (Optional)
-ICC >= 15.0.1 20141023 (Optional)
-LLVM (Clang) >= 6.0 (Optional)
-```
+#### Instructions
+* Open cloned repository directory as CMake folder with Visual Studio (you can use VS2019 or VS2022).
+* Select desired build preset, for example you can use `Windows / x86 / Debug`. You can see other available presets in CMakePresets.json file.
+* In Build menu select Build solution, or you can use hotkey `Ctrl+Shift+B` instead.
 
-### Building
+### Linux
 
-#### Windows
-Use `Visual Studio` to build, open `msvc/metamod.sln` and just select from the solution configurations list `Release` or `Debug`
+#### Prerequisites
+`git`, `cmake`, `ninja-build`, `gcc` or `clang` (with C++17 support)
 
-#### Linux
-
-* Optional options using `build.sh --compiler=[gcc] --jobs=[N] -D[option]=[ON or OFF]` (without square brackets)
+#### Instructions
 
 ```
--c=|--compiler=[icc|gcc|clang]  - Select preferred C/C++ compiler to build
--j=|--jobs=[N]                  - Specifies the number of jobs (commands) to run simultaneously (For faster building)
+cmake -E make_directory ./build
+cd build
+cmake .. --preset linux-x86-debug
+cmake --build .
 ```
-
-```
-Definitions (-D):
-DEBUG                           - Enables debugging mode
-USE_STATIC_LIBSTDC              - Enables static linking library libstdc++
-```
-
-| Compiler           | Build command                    |
-|--------------------|----------------------------------|
-| ICC                |   `./build.sh --compiler=intel`  |
-| LLVM (Clang)       |   `./build.sh --compiler=clang`  |
-| GCC                |   `./build.sh --compiler=gcc`    |
-
-##### Checking build environment (Debian / Ubuntu)
-
-Installing required packages
-```
-sudo dpkg --add-architecture i386
-sudo apt-get update
-sudo apt-get install -y gcc-multilib g++-multilib
-sudo apt-get install -y build-essential
-sudo apt-get install -y libc6-dev libc6-dev-i386
-```
-
-Select the preferred C/C++ Compiler installation
-1) `sudo apt-get install -y gcc g++`
-2) `sudo apt-get install -y clang`
