@@ -166,3 +166,11 @@ endif()
 
 # required for compliance with Xash3D FWGS library naming scheme
 set_target_postfix(metamod)
+
+# copy compiled metamod binaries & extra files to install directory
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/extra/" DESTINATION ".")
+install(TARGETS metamod
+        RUNTIME DESTINATION "."
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)

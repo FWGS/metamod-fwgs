@@ -16,6 +16,6 @@
 **/PublishPath*.txt
 **/*.log
 .vs
-
+CMakeUserPresets.json
 metamod/version/appversion.h
 publish

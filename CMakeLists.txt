@@ -80,8 +80,7 @@ if(WIN32)
     add_custom_command(OUTPUT ${APPVERSION_HEADER}
         COMMAND ${CMAKE_COMMAND} -E echo "Running PreBuild.bat"
         COMMAND cmd /C call "${MSVC_PREBUILD_NATIVE}" "${MSVC_VERSION_NATIVE}" "${MSVC_ROOT_NATIVE}"
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/msvc"
-        COMMENT "Generating application version files (msvc PreBuild)"
+        COMMENT "Generating application version header"
         VERBATIM
     )
 
@@ -118,15 +117,6 @@ if(BUILD_EXAMPLE)
   else()
     message(STATUS "No example build files found under metamod/extra/example")
   endif()
-endif()
-
-# Install rules for metamod target if available
-if(TARGET metamod)
-  install(TARGETS metamod
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-  )
 endif()
 
 message(STATUS "Configuration summary:")
