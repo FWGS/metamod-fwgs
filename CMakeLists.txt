@@ -69,11 +69,12 @@ set(APPVERSION_HEADER "${CMAKE_SOURCE_DIR}/version/appversion.h")
 
 # Create custom target appversion
 if(WIN32)
-  set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/msvc/PreBuild.bat")
+  set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/metamod/msvc/PreBuild.bat")
+
   if(EXISTS "${MSVC_PREBUILD}")
     # Convert to native Windows paths
     file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/version" MSVC_VERSION_NATIVE)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/metamod/version" MSVC_VERSION_NATIVE)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" MSVC_ROOT_NATIVE)
 
     add_custom_command(OUTPUT ${APPVERSION_HEADER}
