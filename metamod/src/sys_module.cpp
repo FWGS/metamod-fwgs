@@ -11,21 +11,6 @@ bool CSysModule::is_opened() const
 	return m_handle != INVALID_HANDLE;
 }
 
-char *CSysModule::find_string_push(const char *string)
-{
-	return mem_find_string_push((char *)getbase(), string, getsize());
-}
-
-char *CSysModule::find_pattern(char *pos, int range, const char *pattern, size_t len)
-{
-	for (auto c = pos + range - len; pos < c; ++pos) {
-		if (mem_compare(pos, pattern, len))
-			return pos;
-	}
-
-	return nullptr;
-}
-
 #ifdef _WIN32
 
 module_handle_t CSysModule::load(void *addr)

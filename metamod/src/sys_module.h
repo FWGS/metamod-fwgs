@@ -21,9 +21,6 @@ public:
 	bool contain(void *addr) const;
 	bool is_opened() const;
 
-	char *find_string_push(const char *string);
-	char *find_pattern(char *pos, int range, const char *pattern, size_t len);
-
 	static module_handle_t find(void *addr);
 	static const char *getloaderror();
 	static const module_handle_t INVALID_HANDLE;

@@ -1,178 +1,109 @@
 {
-  "version": 4,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 10,
-    "patch": 0
-  },
+  "version": 2,
   "configurePresets": [
-	{
-		"name": "windows-x86-debug",
-		"displayName": "Windows / x86 / Debug",
-		"description": "Windows, x86, Debug",
-		"generator": "Ninja",
-		"binaryDir": "${sourceDir}/build/windows-x86-debug",
-		"architecture": {
-			"value": "x86",
-			"strategy": "external"
-		},
-		"cacheVariables": {
-			"CMAKE_BUILD_TYPE": "Debug"
-		},
-		"hidden": false,
-		"conditions": [
-			{
-				"type": "equals",
-				"lhs": "hostSystemName",
-				"rhs": "Windows"
-			}
-		]
-	},
-	{
-		"name": "windows-x86-release",
-		"displayName": "Windows / x86 / Release",
-		"description": "Windows, x86, Release",
-		"generator": "Ninja",
-		"binaryDir": "${sourceDir}/build/windows-x86-release",
-		"architecture": {
-			"value": "x86",
-			"strategy": "external"
-		},
-		"cacheVariables": {
-			"CMAKE_BUILD_TYPE": "Release"
-		},
-		"hidden": false,
-		"conditions": [
-			{
-				"type": "equals",
-				"lhs": "hostSystemName",
-				"rhs": "Windows"
-			}
-		]
-	},
-	{
-		"name": "windows-x64-debug",
-		"displayName": "Windows / x64 / Debug",
-		"description": "Windows, x64, Debug",
-		"generator": "Ninja",
-		"binaryDir": "${sourceDir}/build/windows-x64-debug",
-		"architecture": {
-			"value": "x64",
-			"strategy": "external"
-		},
-		"cacheVariables": {
-			"CMAKE_BUILD_TYPE": "Debug"
-		},
-		"hidden": false,
-		"conditions": [
-			{
-				"type": "equals",
-				"lhs": "hostSystemName",
-				"rhs": "Windows"
-			}
-		]
-	},
-	{
-		"name": "windows-x64-release",
-		"displayName": "Windows / x64 / Release",
-		"description": "Windows, x64, Release",
-		"generator": "Ninja",
-		"binaryDir": "${sourceDir}/build/windows-x64-release",
-		"architecture": {
-			"value": "x64",
-			"strategy": "external"
-		},
-		"cacheVariables": {
-			"CMAKE_BUILD_TYPE": "Release"
-		},
-		"hidden": false,
-		"conditions": [
-			{
-				"type": "equals",
-				"lhs": "hostSystemName",
-				"rhs": "Windows"
-			}
-		]
-	},
+    {
+      "name": "windows-x86-debug",
+      "displayName": "Windows / x86 / Debug",
+      "description": " ",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Windows" ] } }
+    },
+    {
+      "name": "windows-x86-release",
+      "displayName": "Windows / x86 / Release",
+      "description": " ",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Windows" ] } }
+    },
+    {
+      "name": "windows-x64-debug",
+      "displayName": "Windows / x64 / Debug",
+      "description": " ",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Windows" ] } }
+    },
+    {
+      "name": "windows-x64-release",
+      "displayName": "Windows / x64 / Release",
+      "description": " ",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Windows" ] } }
+    },
     {
       "name": "linux-x86-debug",
       "displayName": "Linux / x86 / Debug",
-      "description": "Linux, x86, Debug",
+      "description": " ",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/linux-x86-debug",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_FLAGS": "-m32",
-        "CMAKE_CXX_FLAGS": "-m32"
+        "CMAKE_BUILD_TYPE": "Debug"
       },
-      "hidden": false,
-      "conditions": [
-        {
-          "type": "equals",
-          "lhs": "hostSystemName",
-          "rhs": "Linux"
-        }
-      ]
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Linux" ] } }
     },
     {
       "name": "linux-x86-release",
       "displayName": "Linux / x86 / Release",
-      "description": "Linux, x86, Release",
+      "description": " ",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/linux-x86-release",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_FLAGS": "-m32",
-        "CMAKE_CXX_FLAGS": "-m32"
+        "CMAKE_BUILD_TYPE": "Release"
       },
-      "hidden": false,
-      "conditions": [
-        {
-          "type": "equals",
-          "lhs": "hostSystemName",
-          "rhs": "Linux"
-        }
-      ]
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Linux" ] } }
     },
     {
       "name": "linux-x64-debug",
       "displayName": "Linux / x64 / Debug",
-      "description": "Linux, x64, Debug",
+      "description": " ",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/linux-x64-debug",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_FLAGS": "-m64",
-        "CMAKE_CXX_FLAGS": "-m64"
+        "CMAKE_BUILD_TYPE": "Debug"
       },
-      "hidden": false,
-      "conditions": [
-        {
-          "type": "equals",
-          "lhs": "hostSystemName",
-          "rhs": "Linux"
-        }
-      ]
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Linux" ] } }
     },
     {
       "name": "linux-x64-release",
       "displayName": "Linux / x64 / Release",
-      "description": "Linux, x64, Release",
+      "description": " ",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/linux-x64-release",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_FLAGS": "-m64",
-        "CMAKE_CXX_FLAGS": "-m64"
+        "CMAKE_BUILD_TYPE": "Release"
       },
-      "hidden": false,
-      "conditions": [
-        {
-          "type": "equals",
-          "lhs": "hostSystemName",
-          "rhs": "Linux"
-        }
-      ]
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Linux" ] } }
     }
   ]
 }

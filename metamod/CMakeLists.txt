@@ -23,7 +23,6 @@ set(METAMOD_SOURCES
 	"src/h_export.cpp"
 	"src/log_meta.cpp"
 	"src/mdebug.cpp"
-	"src/mem_utils.cpp"
 	"src/meta_rehlds_api.cpp"
 	"src/metamod.cpp"
 	"src/mextdll.cpp"
@@ -39,63 +38,18 @@ set(METAMOD_SOURCES
 	"src/studioapi.cpp"
 	"src/sys_module.cpp"
 	"src/utils.cpp"
-	"src/glibc_compat.cpp"
 )
 
 # required for ABI compatibility
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.rc")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.def")
+elseif(XASH_LINUX AND XASH_X86)
+    list(APPEND METAMOD_SOURCES "src/glibc_compat.cpp")
 endif()
 
 add_library(metamod SHARED ${METAMOD_SOURCES})
-set(APPVERSION_HEADER "${PROJECT_SOURCE_DIR}/version/appversion.h")
-
-if (WIN32)
-    set(MSVC_PREBUILD "${PROJECT_SOURCE_DIR}/msvc/PreBuild.bat")
-    set(MSVC_POSTBUILD "${PROJECT_SOURCE_DIR}/msvc/PostBuild.bat")
-
-    if (EXISTS "${MSVC_PREBUILD}")
-        # Convert to native Windows paths
-        file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
-        file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/version" MSVC_VERSION_NATIVE)
-        file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}" MSVC_ROOT_NATIVE)
-
-        add_custom_command(OUTPUT ${APPVERSION_HEADER}
-            COMMAND ${CMAKE_COMMAND} -E echo "Running PreBuild.bat"
-            COMMAND cmd /C call "${MSVC_PREBUILD_NATIVE}" "${MSVC_VERSION_NATIVE}" "${MSVC_ROOT_NATIVE}"
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/msvc"
-            COMMENT "Generating application version files (msvc PreBuild)"
-            VERBATIM
-        )
-
-        add_custom_target(appversion_prebuild DEPENDS ${APPVERSION_HEADER})
-        add_dependencies(metamod appversion_prebuild)
-    endif()
-
-    if (EXISTS "${MSVC_POSTBUILD}")
-        file(TO_NATIVE_PATH "${MSVC_POSTBUILD}" MSVC_POSTBUILD_NATIVE)
-
-        add_custom_command(TARGET metamod POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Running PostBuild.bat"
-            COMMAND cmd /C call "${MSVC_POSTBUILD_NATIVE}" "$<TARGET_FILE_DIR:metamod>" "$<TARGET_FILE_NAME:metamod>" "$<TARGET_FILE_SUFFIX:metamod>" "${PROJECT_SOURCE_DIR}"
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/msvc"
-            COMMENT "Running msvc PostBuild script"
-            VERBATIM
-        )
-    endif()
-else()
-    if (EXISTS "${PROJECT_SOURCE_DIR}/version/appversion.sh")
-        add_custom_command(OUTPUT ${APPVERSION_HEADER}
-            COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" sh "${PROJECT_SOURCE_DIR}/version/appversion.sh" "${PROJECT_SOURCE_DIR}"
-            COMMENT "Generating application version files (sh)"
-            VERBATIM
-        )
-        add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
-        add_dependencies(metamod appversion)
-    endif()
-endif()
-
+add_dependencies(metamod appversion)
 
 target_include_directories(metamod PRIVATE
 	${PROJECT_HEADERS_DIR}

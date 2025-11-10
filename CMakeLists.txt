@@ -64,28 +64,35 @@ set(USE_STATIC_LIBSTDC ${USE_STATIC_LIBSTDC} CACHE BOOL "Enables static linking 
 set(BUILD_EXAMPLE ${BUILD_EXAMPLE} CACHE BOOL "Build example plugin (if available)")
 
 # Appversion target: run platform-specific script if present
-set(APPVERSION_SH "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
-set(APPVERSION_BAT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.bat")
-set(APPVERSION_PS1 "${CMAKE_SOURCE_DIR}/metamod/version/appversion.ps1")
+set(APPVERSION_SCRIPT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
+set(APPVERSION_HEADER "${CMAKE_SOURCE_DIR}/version/appversion.h")
 
-if(EXISTS "${APPVERSION_SH}" AND NOT WIN32)
-  add_custom_target(appversion
-    COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" sh "${APPVERSION_SH}" "${CMAKE_SOURCE_DIR}"
+# Create custom target appversion
+if(WIN32)
+  set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/msvc/PreBuild.bat")
+  if(EXISTS "${MSVC_PREBUILD}")
+    # Convert to native Windows paths
+    file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/version" MSVC_VERSION_NATIVE)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" MSVC_ROOT_NATIVE)
+
+    add_custom_command(OUTPUT ${APPVERSION_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E echo "Running PreBuild.bat"
+        COMMAND cmd /C call "${MSVC_PREBUILD_NATIVE}" "${MSVC_VERSION_NATIVE}" "${MSVC_ROOT_NATIVE}"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/msvc"
+        COMMENT "Generating application version files (msvc PreBuild)"
+        VERBATIM
+    )
+
+    add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
+  endif()
+elseif(EXISTS "${APPVERSION_SCRIPT}" AND NOT WIN32)
+  add_custom_command(OUTPUT ${APPVERSION_HEADER}
+    COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" bash "${APPVERSION_SCRIPT}" "${CMAKE_SOURCE_DIR}"
     COMMENT "Generating application version files (sh)"
     VERBATIM
   )
-elseif(EXISTS "${APPVERSION_BAT}" AND WIN32)
-  add_custom_target(appversion
-    COMMAND cmd /C "\"${APPVERSION_BAT}\" \"${CMAKE_SOURCE_DIR}\""
-    COMMENT "Generating application version files (bat)"
-    VERBATIM
-  )
-elseif(EXISTS "${APPVERSION_PS1}" AND WIN32)
-  add_custom_target(appversion
-    COMMAND powershell -ExecutionPolicy Bypass -File "${APPVERSION_PS1}" "${CMAKE_SOURCE_DIR}"
-    COMMENT "Generating application version files (powershell)"
-    VERBATIM
-  )
+  add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
 else()
   message(STATUS "No appversion script found; skipping appversion target")
 endif()

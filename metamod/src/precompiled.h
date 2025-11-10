@@ -49,7 +49,6 @@
 #include "sdk_util.h"
 #include "enginecallbacks.h"
 #include "utils.h"
-#include "mem_utils.h"
 #include "meta_rehlds_api.h"
 #include "physint.h"
 
