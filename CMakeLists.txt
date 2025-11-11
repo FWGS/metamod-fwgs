@@ -97,12 +97,8 @@ else()
   message(STATUS "No appversion script found; skipping appversion target")
 endif()
 
-# Add main metamod directory
-if(EXISTS "${CMAKE_SOURCE_DIR}/metamod/CMakeLists.txt")
-  add_subdirectory(metamod)
-else()
-  message(FATAL_ERROR "Required subdirectory 'metamod' not found")
-endif()
+add_subdirectory(library-suffix)
+add_subdirectory(metamod)
 
 # Optionally build example plugin (use CMakeLists in example if present, otherwise try existing Makefile)
 if(BUILD_EXAMPLE)

@@ -116,6 +116,8 @@ if (MSVC)
     )
 endif()
 
+target_link_libraries(metamod PRIVATE library_suffix)
+
 if (UNIX)
     target_link_libraries(metamod PRIVATE dl pthread)
 elseif (WIN32)

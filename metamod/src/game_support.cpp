@@ -1,5 +1,6 @@
 #include "precompiled.h"
-#include "build_info.h"
+#include "build.h"
+#include "library_suffix.h"
 
 // Adapted from adminmod h_export.cpp:
 //! this structure contains a list of supported mods and their dlls names
@@ -111,8 +112,9 @@ const game_modinfo_t g_known_games[] = {
 // Find a modinfo corresponding to the given game name.
 static const game_modinfo_t *lookup_game(const char *name, char *libname, size_t bufsize)
 {
-	char temp[MAX_PATH];
-	char purelib[MAX_PATH];
+	char library_path[MAX_PATH];
+	char library_name[MAX_PATH];
+	char library_raw_name[MAX_PATH];
 
 	for (auto& known : g_known_games) {
 		if (known.name && !Q_stricmp(known.name, name)) {
@@ -124,36 +126,27 @@ static const game_modinfo_t *lookup_game(const char *name, char *libname, size_t
 			if (!knowndll)
 				continue;
 
-#if XASH_ARCHITECTURE == ARCHITECTURE_X86
-			Q_snprintf(temp, sizeof temp, "dlls/%s", knowndll);
-			if (is_file_exists_in_gamedir(temp))
+#if XASH_ARCHITECTURE == ARCHITECTURE_X86 && (XASH_WIN32 || XASH_LINUX || XASH_APPLE)
+			Q_snprintf(library_path, sizeof(library_path), "dlls/%s", knowndll);
+			if (is_file_exists_in_gamedir(library_path))
 			{
 				Q_strncpy(libname, knowndll, bufsize);
 				return &known;
 			}
 #else
-			// extract pure library name (up to first '_' or '.')
-			const char* end = Q_strchr(knowndll, '_');
-			if (!end)
-				end = Q_strchr(knowndll, '.');
+			// extract raw library name, remove extension & intel suffix
+			const char *end = Q_strchr(knowndll, '.');
+			const int length = end ? (end - knowndll) : Q_strlen(knowndll);
+			Q_strncpy(library_raw_name, knowndll, length);
+			library_raw_name[length] = '\0';
 
-			int purelen = end ? (end - knowndll) : Q_strlen(knowndll);
-			Q_strncpy(purelib, knowndll, purelen);
-			purelib[purelen] = '\0';
+			COM_StripIntelSuffix(library_raw_name);
+			COM_GenerateCommonLibraryName(library_raw_name, library_name, sizeof(library_name));
+			Q_snprintf(library_path, sizeof(library_path), "dlls/%s", library_name);
 
-			const char *ext = Q_strrchr(knowndll, '.');
-			if (!ext)
-				continue;
-			else {
-				ext += 1; // skip dot
-			}
-
-			// try library name constructed according to Xash3D library naming scheme
-			Q_snprintf(temp, sizeof temp, "dlls/%s_%s.%s", purelib, BuildInfo::GetArchitecture(), ext);
-			if (is_file_exists_in_gamedir(temp))
+			if (is_file_exists_in_gamedir(library_path))
 			{
-				Q_snprintf(temp, sizeof temp, "%s_%s.%s", purelib, BuildInfo::GetArchitecture(), ext);
-				Q_strncpy(libname, temp, bufsize);
+				Q_strncpy(libname, library_name, bufsize);
 				return &known;
 			}
 #endif
