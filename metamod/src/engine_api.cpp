@@ -452,6 +452,9 @@ static void mm_CVarSetString(const char *szVarName, const char *szValue)
 	RETURN_API_void()
 }
 
+#if	defined(__GNUC__) || defined(__clang__)
+__attribute__((optimize("O0")))
+#endif
 static void mm_AlertMessage(ALERT_TYPE atype, const char *szFmt, ...)
 {
 #ifndef UNFINISHED
