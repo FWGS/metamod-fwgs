@@ -4,7 +4,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
-option(DEBUG "Build with debug information." OFF)
 option(USE_STATIC_LIBSTDC "Enables static linking libstdc++." OFF)
 option(BUILD_EXAMPLE "Build example plugin (if available)" OFF)
 
@@ -111,6 +110,5 @@ endif()
 
 message(STATUS "Configuration summary:")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  DEBUG option: ${DEBUG}")
 message(STATUS "  USE_STATIC_LIBSTDC option: ${USE_STATIC_LIBSTDC}")
 message(STATUS "  BUILD_EXAMPLE option: ${BUILD_EXAMPLE}")

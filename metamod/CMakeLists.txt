@@ -64,12 +64,18 @@ if (MSVC)
 else()
     list(APPEND METAMOD_COMPILE_OPTIONS -Wall -Wextra -Wno-unused-parameter -fno-exceptions -fno-builtin -Wno-unknown-pragmas)
 
-    if (DEBUG)
-        list(APPEND METAMOD_COMPILE_OPTIONS -g3 -O0 -ggdb)
-    else()
-        list(APPEND METAMOD_COMPILE_OPTIONS -g0 -O3 -fno-stack-protector)
-        list(APPEND METAMOD_LINK_OPTIONS -s)
-    endif()
+    # debug mode flags
+    list(APPEND METAMOD_COMPILE_OPTIONS
+		$<$<CONFIG:Debug>:-g3>
+		$<$<CONFIG:Debug>:-O0> 
+		$<$<CONFIG:Debug>:-ggdb>)
+
+	# release mode flags
+	list(APPEND METAMOD_LINK_OPTIONS $<$<NOT:$<CONFIG:Debug>>:-s>)
+    list(APPEND METAMOD_COMPILE_OPTIONS
+		$<$<NOT:$<CONFIG:Debug>>:-g0> 
+		$<$<NOT:$<CONFIG:Debug>>:-O3>  
+		$<$<NOT:$<CONFIG:Debug>>:-fno-stack-protector>)
 
     list(APPEND METAMOD_COMPILE_OPTIONS -mtune=generic -msse3)
 
@@ -141,9 +147,7 @@ else()
 endif()
 
 # NDEBUG in release mode
-if (NOT DEBUG)
-    target_compile_definitions(metamod PRIVATE NDEBUG)
-endif()
+target_compile_definitions(metamod PRIVATE $<$<NOT:$<CONFIG:Debug>>:NDEBUG>)
 
 # required for compliance with Xash3D FWGS library naming scheme
 set_target_postfix(metamod)
