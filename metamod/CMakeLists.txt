@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 project(metamod CXX)
 
 set(PROJECT_HEADERS_DIR
@@ -55,20 +55,15 @@ target_include_directories(metamod PRIVATE
 	${PROJECT_HEADERS_DIR}
 )
 
-# Compiler-specific and platform-specific flags
 set(METAMOD_COMPILE_OPTIONS "")
 set(METAMOD_LINK_OPTIONS "")
 
 if (MSVC)
-    # MSVC sensible defaults
     list(APPEND METAMOD_COMPILE_OPTIONS /W3 /EHsc)
-    # Avoid C runtime warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
-    # GCC / Clang common options
     list(APPEND METAMOD_COMPILE_OPTIONS -Wall -Wextra -Wno-unused-parameter -fno-exceptions -fno-builtin -Wno-unknown-pragmas)
 
-    # Try to enable some optimizations and sane defaults
     if (DEBUG)
         list(APPEND METAMOD_COMPILE_OPTIONS -g3 -O0 -ggdb)
     else()
@@ -76,35 +71,16 @@ else()
         list(APPEND METAMOD_LINK_OPTIONS -s)
     endif()
 
-    # Architecture/processor tuning - leave conservative default
     list(APPEND METAMOD_COMPILE_OPTIONS -mtune=generic -msse3)
 
-    # Compiler specific tweaks
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
             list(APPEND METAMOD_COMPILE_OPTIONS -Wno-stringop-truncation -Wno-format-truncation -Wno-class-memaccess -fcf-protection=none)
         endif()
         list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized -Wno-unused-but-set-variable)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        # Clang specific adjustments can go here
         list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized)
-    endif()
-
-    # Position independent code for shared libraries on non-Windows
-    set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-
-# Apply compile and link options
-target_compile_options(metamod PRIVATE ${METAMOD_COMPILE_OPTIONS})
-# target_link_options requires CMake >= 3.13, but most modern envs have it; guard just in case
-if (POLICY CMP0079)
-    cmake_policy(SET CMP0079 NEW)
-endif()
-if (COMMAND target_link_options)
-    target_link_options(metamod PRIVATE ${METAMOD_LINK_OPTIONS})
-else()
-    # Fallback to setting property
-    set_target_properties(metamod PROPERTIES LINK_FLAGS "${METAMOD_LINK_OPTIONS}")
+    endif()    
 endif()
 
 # MSVC: add configuration-specific flags using generator expressions to avoid conflicts such as /RTC1 vs /O2
@@ -116,6 +92,9 @@ if (MSVC)
     )
 endif()
 
+target_compile_options(metamod PRIVATE ${METAMOD_COMPILE_OPTIONS})
+target_link_options(metamod PRIVATE ${METAMOD_LINK_OPTIONS})
+set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(metamod PRIVATE library_suffix)
 
 if (UNIX)

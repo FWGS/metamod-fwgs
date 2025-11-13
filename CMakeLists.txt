@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 project(metamod-fwgs LANGUAGES C CXX)
@@ -58,11 +58,6 @@ else()
   endif()
 endif()
 
-# Expose options to subdirectories
-set(DEBUG ${DEBUG} CACHE BOOL "Build with debug information.")
-set(USE_STATIC_LIBSTDC ${USE_STATIC_LIBSTDC} CACHE BOOL "Enables static linking libstdc++.")
-set(BUILD_EXAMPLE ${BUILD_EXAMPLE} CACHE BOOL "Build example plugin (if available)")
-
 # Appversion target: run platform-specific script if present
 set(APPVERSION_SCRIPT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
 set(APPVERSION_HEADER "${CMAKE_SOURCE_DIR}/version/appversion.h")
@@ -72,7 +67,6 @@ if(WIN32)
   set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/metamod/msvc/PreBuild.bat")
 
   if(EXISTS "${MSVC_PREBUILD}")
-    # Convert to native Windows paths
     file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/metamod/version" MSVC_VERSION_NATIVE)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" MSVC_ROOT_NATIVE)
