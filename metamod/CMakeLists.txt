@@ -71,12 +71,12 @@ else()
 		$<$<CONFIG:Debug>:-ggdb>)
 
 	# release mode flags
-	list(APPEND METAMOD_LINK_OPTIONS $<$<NOT:$<CONFIG:Debug>>:-s>)
     list(APPEND METAMOD_COMPILE_OPTIONS
-		$<$<NOT:$<CONFIG:Debug>>:-g0> 
+		$<$<NOT:$<CONFIG:Debug>>:-g> 
 		$<$<NOT:$<CONFIG:Debug>>:-O3>  
 		$<$<NOT:$<CONFIG:Debug>>:-fno-stack-protector>)
 
+    list(APPEND METAMOD_LINK_OPTIONS $<$<CONFIG:Release>:-s>) # strip debug symbols, but only in strict release mode
     list(APPEND METAMOD_COMPILE_OPTIONS -mtune=generic -msse3)
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
