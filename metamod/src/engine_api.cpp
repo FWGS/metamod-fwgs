@@ -332,6 +332,9 @@ static void mm_ServerExecute()
 	RETURN_API_void()
 }
 
+#if	defined(__GNUC__) || defined(__clang__)
+__attribute__((optimize("O0")))
+#endif
 static void mm_engClientCommand(edict_t *pEdict, const char *szFmt, ...)
 {
 	META_ENGINE_HANDLE_void_varargs(FN_CLIENTCOMMAND_ENG, pfnClientCommand, pEdict, szFmt);
@@ -493,6 +496,9 @@ static void mm_AlertMessage(ALERT_TYPE atype, const char *szFmt, ...)
 	RETURN_API_void()
 }
 
+#if	defined(__GNUC__) || defined(__clang__)
+__attribute__((optimize("O0")))
+#endif
 static void mm_EngineFprintf(void *pfile, const char *szFmt, ...)
 {
 	META_ENGINE_HANDLE_void_varargs(FN_ENGINEFPRINTF, pfnEngineFprintf, pfile, szFmt);
