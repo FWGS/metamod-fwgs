@@ -1072,6 +1072,12 @@ static int mm_EngCheckParm(const char *pchCmdLineToken, char **ppnext)
 	RETURN_API();
 }
 
+static edict_t *mm_PEntityOfEntIndexAllEntities(int entIndex)
+{
+	META_ENGINE_HANDLE(edict_t *, NULL, FN_PENTITYOFENTINDEXALLENTITIES, pfnPEntityOfEntIndexAllEntities, (entIndex));
+	RETURN_API()
+}
+
 enginefuncs_t g_meta_engfuncs =
 {
 	&mm_PrecacheModel,			// pfnPrecacheModel()
@@ -1275,5 +1281,6 @@ enginefuncs_t g_meta_engfuncs =
 
 	&mm_QueryClientCvarValue,		// pfnQueryClientCvarValue()
 	&mm_QueryClientCvarValue2,		// pfnQueryClientCvarValue2()
-	&mm_EngCheckParm			// pfnCheckParm()
+	&mm_EngCheckParm,			// pfnCheckParm()
+	&mm_PEntityOfEntIndexAllEntities	// pfnPEntityOfEntIndexAllEntities()
 };

@@ -248,6 +248,7 @@ struct engine_info_t
 	api_info_t pfnQueryClientCvarValue;
 	api_info_t pfnQueryClientCvarValue2;
 	api_info_t pfnEngCheckParm;
+	api_info_t pfnPEntityOfEntIndexAllEntities;
 
 	// end
 	api_info_t END;

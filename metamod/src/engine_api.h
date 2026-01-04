@@ -162,7 +162,7 @@ typedef void (*FN_RESETTUTORMESSAGEDECAYDATA)();
 typedef void (*FN_QUERYCLIENTCVARVALUE)(const edict_t *pEdict, const char *cvarName); // Use FN_QUERYCLIENTCVARVALUE2 instead
 typedef void (*FN_QUERYCLIENTCVARVALUE2)(const edict_t *pEdict, const char *cvarName, int requestID);
 typedef int (*FN_CHECKPARM)(const char *pchCmdLineToken, char **ppnext);
-
+typedef edict_t *(*FN_PENTITYOFENTINDEXALLENTITIES)(int iEntIndex);
 
 // According to SDK engine/eiface.h:
 // ONLY ADD NEW FUNCTIONS TO THE END OF THIS STRUCT. INTERFACE VERSION IS FROZEN AT 138
