@@ -322,7 +322,7 @@ struct getfunc_traits<ifvers_t, physics_interface_t> {
 template<typename ifvers_t, typename table_t>
 bool get_function_table(const char* ifname, int ifvers_mm, table_t*& table, size_t table_size = sizeof(table_t))
 {
-	using getfunc_t = getfunc_traits<ifvers_t, table_t>::type;
+	using getfunc_t = typename getfunc_traits<ifvers_t, table_t>::type;
 	auto pfnGetFuncs = reinterpret_cast<getfunc_t>(g_GameDLL.sys_module.getsym(ifname));
 
 	if (pfnGetFuncs)
