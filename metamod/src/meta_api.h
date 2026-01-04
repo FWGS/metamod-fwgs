@@ -5,6 +5,7 @@
 #include "engine_api.h"         // GET_ENGINE_FUNCTIONS_FN, etc
 #include "enginecallbacks.h"
 #include "plinfo.h"             // plugin_info_t, etc
+#include "physint.h"
 #include "mutil.h"
 
 // Version consists of "major:minor", two separate integer numbers.
@@ -85,6 +86,7 @@ struct gamedll_funcs_t
 {
 	DLL_FUNCTIONS *dllapi_table;
 	NEW_DLL_FUNCTIONS *newapi_table;
+	physics_interface_t *physint_table;
 };
 
 // Declared in plugin; referenced in macros.

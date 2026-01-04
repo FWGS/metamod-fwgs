@@ -33,6 +33,7 @@ set(METAMOD_SOURCES
 	"src/mutil.cpp"
 	"src/precompiled.cpp"
 	"src/public_amalgamation.cpp"
+	"src/physint_dllapi.cpp"
 	"src/reg_support.cpp"
 	"src/sdk_util.cpp"
 	"src/studioapi.cpp"

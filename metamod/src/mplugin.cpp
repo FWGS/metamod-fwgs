@@ -36,6 +36,7 @@ MPlugin::MPlugin()
 
 	m_gamedll_funcs.dllapi_table = nullptr;
 	m_gamedll_funcs.newapi_table = nullptr;
+	m_gamedll_funcs.physint_table = nullptr;
 
 	Q_memset(m_desc, 0, sizeof(m_desc));
 	Q_memset(m_filename, 0, sizeof(m_filename));

@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include <type_traits>
 
 cvar_t g_meta_version = { "metamod_version", APP_VERSION, FCVAR_SERVER, 0, nullptr };
 
@@ -309,18 +310,35 @@ bool meta_init_gamedll()
 }
 
 template<typename ifvers_t, typename table_t>
+struct getfunc_traits {
+    using type = int(*)(table_t *pFunctionTable, ifvers_t interfaceVersion);
+};
+
+template<typename ifvers_t>
+struct getfunc_traits<ifvers_t, physics_interface_t> {
+    using type = int(*)(int interfaceVersion, server_physics_api_t *pfuncsFromEngine, physics_interface_t *pFunctionTable);
+};
+
+template<typename ifvers_t, typename table_t>
 bool get_function_table(const char* ifname, int ifvers_mm, table_t*& table, size_t table_size = sizeof(table_t))
 {
-	typedef int(*getfunc_t)(table_t *pFunctionTable, ifvers_t interfaceVersion);
+	using getfunc_t = getfunc_traits<ifvers_t, table_t>::type;
+	auto pfnGetFuncs = reinterpret_cast<getfunc_t>(g_GameDLL.sys_module.getsym(ifname));
 
-	auto pfnGetFuncs = (getfunc_t)g_GameDLL.sys_module.getsym(ifname);
-
-	if (pfnGetFuncs) {
+	if (pfnGetFuncs)
+	{
+		int result;
+		int ifvers_gamedll = ifvers_mm;
 		table = (table_t *)calloc(1, table_size);
 
-		int ifvers_gamedll = ifvers_mm;
+		if constexpr (std::is_same_v<table_t, physics_interface_t>) {
+			result = pfnGetFuncs(ifvers_gamedll, &g_meta_physfuncs, table);
+		}
+		else {
+			result = pfnGetFuncs(table, ifvers_gamedll);
+		}
 
-		if (pfnGetFuncs(table, ifvers_gamedll)) {
+		if (result) {
 			META_DEBUG(3, "dll: Game '%s': Found %s", g_GameDLL.name, ifname);
 			return true;
 		}
@@ -415,18 +433,17 @@ bool meta_load_gamedll()
 	get_function_table<int&>("GetNewDLLFunctions", NEW_DLL_FUNCTIONS_VERSION, g_GameDLL.funcs.newapi_table);
 
 	// Look for API2 interface in plugin; preferred over API-1.
-	bool found = get_function_table<int&>("GetEntityAPI2", INTERFACE_VERSION, g_GameDLL.funcs.dllapi_table);
-
-	// Look for API-1 in plugin, if API2 interface wasn't found.
-	if (!found) {
-		found = get_function_table_old("GetEntityAPI", INTERFACE_VERSION, g_GameDLL.funcs.dllapi_table);
+	if (!get_function_table<int&>("GetEntityAPI2", INTERFACE_VERSION, g_GameDLL.funcs.dllapi_table))
+	{
+		// Look for API-1 in plugin, if API2 interface wasn't found.
+		if (!get_function_table_old("GetEntityAPI", INTERFACE_VERSION, g_GameDLL.funcs.dllapi_table))
+		{
+			META_ERROR("dll: Couldn't find either GetEntityAPI nor GetEntityAPI2 in game DLL '%s'", g_GameDLL.name);
+			return false;
+		}
 	}
 
-	// If didn't find either, return failure.
-	if (!found) {
-		META_ERROR("dll: Couldn't find either GetEntityAPI nor GetEntityAPI2 in game DLL '%s'", g_GameDLL.name);
-		return false;
-	}
+	get_function_table<int>("Server_GetPhysicsInterface", SV_PHYSICS_INTERFACE_VERSION, g_GameDLL.funcs.physint_table);
 
 	META_LOG("Game DLL for '%s' loaded successfully", g_GameDLL.desc);
 	return true;

@@ -1,33 +1,5 @@
 #include "precompiled.h"
-
-// Original DLL routines, functions returning "void".
-#define META_DLLAPI_HANDLE_void(FN_TYPE, pfnName, pfn_args) \
-	SETUP_API_CALLS_void(FN_TYPE, pfnName, g_dllapi_info); \
-	CALL_PLUGIN_API_void(P_PRE, pfnName, pfn_args, m_dllapi_table); \
-	CALL_GAME_API_void(pfnName, pfn_args, dllapi_table); \
-	CALL_PLUGIN_API_void(P_POST, pfnName, pfn_args, m_dllapi_post_table);
-
-// Original DLL routines, functions returning an actual value.
-#define META_DLLAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pfn_args) \
-	SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, g_dllapi_info); \
-	CALL_PLUGIN_API(P_PRE, ret_init, pfnName, pfn_args, MRES_SUPERCEDE, m_dllapi_table); \
-	CALL_GAME_API(pfnName, pfn_args, dllapi_table); \
-	CALL_PLUGIN_API(P_POST, ret_init, pfnName, pfn_args, MRES_OVERRIDE, m_dllapi_post_table);
-
-
-// The "new" api routines (just 3 right now), functions returning "void".
-#define META_NEWAPI_HANDLE_void(FN_TYPE, pfnName, pfn_args) \
-	SETUP_API_CALLS_void(FN_TYPE, pfnName, g_newapi_info); \
-	CALL_PLUGIN_API_void(P_PRE, pfnName, pfn_args, m_newapi_table); \
-	CALL_GAME_API_void(pfnName, pfn_args, newapi_table); \
-	CALL_PLUGIN_API_void(P_POST, pfnName, pfn_args, m_newapi_post_table);
-
-// The "new" api routines (just 3 right now), functions returning an actual value.
-#define META_NEWAPI_HANDLE(ret_t, ret_init, FN_TYPE, pfnName, pfn_args) \
-	SETUP_API_CALLS(ret_t, ret_init, FN_TYPE, pfnName, g_newapi_info); \
-	CALL_PLUGIN_API(P_PRE, ret_init, pfnName, pfn_args, MRES_SUPERCEDE, m_newapi_table); \
-	CALL_GAME_API(pfnName, pfn_args, newapi_table); \
-	CALL_PLUGIN_API(P_POST, ret_init, pfnName, pfn_args, MRES_OVERRIDE, m_newapi_post_table);
+#include "dllapi_helper_macros.h"
 
 // Unload game DLL and meta plugins
 static void MM_POST_HOOK EXT_FUNC mm_GameShutdown()
@@ -551,28 +523,5 @@ C_DLLEXPORT int GetNewDLLFunctions(NEW_DLL_FUNCTIONS *pNewFunctionTable, int *in
 
 	g_meta_extdll.load();
 	Q_memcpy(pNewFunctionTable, &sNewFunctionTable, sizeof(NEW_DLL_FUNCTIONS));
-	return TRUE;
-}
-
-C_DLLEXPORT int Server_GetPhysicsInterface(int iVersion, server_physics_api_t *pfuncsFromEngine, physics_interface_t *pFunctionTable)
-{
-	// TODO: provide physint to plugins
-	if (iVersion != SV_PHYSICS_INTERFACE_VERSION || pfuncsFromEngine == nullptr || pFunctionTable == nullptr)
-		return FALSE;
-
-	// engine always require for nullptr, only replace single function needed for linkent alternative
-	Q_memset(pFunctionTable, 0, sizeof(*pFunctionTable));
-	pFunctionTable->SV_CreateEntity = [](edict_t *pent, const char *szName)
-	{
-		// check if gamedll implements this entity
-		ENTITY_FN SpawnEdict = reinterpret_cast<ENTITY_FN>(g_GameDLL.sys_module.getsym(szName));
-
-		// should we check metamod module itself? engine will do GPA on metamod module before failing back to this call anyway
-		if( !SpawnEdict )
-			return -1; // failed
-
-		SpawnEdict( &pent->v );
-		return 0; // handled
-	};
 	return TRUE;
 }

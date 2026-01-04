@@ -36,6 +36,7 @@ extern gamedll_t g_GameDLL;
 // SDK variables for storing engine funcs and globals.
 extern enginefuncs_t g_engfuncs;
 extern globalvars_t* gpGlobals;
+extern server_physics_api_t g_meta_physfuncs;
 
 // g_config structure.
 extern MConfig* g_config;

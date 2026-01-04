@@ -666,7 +666,7 @@ static int32 mm_RandomLong(int32 lLow, int32 lHigh)
 	RETURN_API()
 }
 
-float mm_RandomFloat(float flLow, float flHigh)
+static float mm_RandomFloat(float flLow, float flHigh)
 {
 	META_ENGINE_HANDLE(float, 0.0, FN_RANDOMFLOAT, pfnRandomFloat, (flLow, flHigh));
 	RETURN_API()
