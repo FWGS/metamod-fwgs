@@ -34,6 +34,7 @@ const game_modinfo_t g_known_games[] = {
 	{ "czeror",             "dlls/cz.so",               "dlls/cz.dll",                    "Counter-Strike:Condition Zero Deleted Scenes"     }, // ok
 	{ "dcrisis",            "dlls/dc_i386.so",          "dlls/dc.dll",                    "Desert Crisis"                                    }, // updated linux binary name [2010]
 	{ "decay",              nullptr,                    "dlls/decay.dll",                 "Half-Life: Decay"                                 }, // have no linux binary!
+	{ "diffusion",          "bin/server.so",            "bin/server.dll",                 "Diffusion"                                        },
 	{ "dmc",                "dlls/dmc.so",              "dlls/dmc.dll",                   "Deathmatch Classic"                               }, // ok
 	{ "dod",                "dlls/dod.so",              "dlls/dod.dll",                   "Day of Defeat"                                    }, // ok
 	{ "dpb",                "dlls/pb.i386.so",          "dlls/pb.dll",                    "Digital Paintball"                                }, // ok
@@ -70,6 +71,7 @@ const game_modinfo_t g_known_games[] = {
 	{ "paintball",          "dlls/pb.so",               "dlls/mp.dll",                    "Paintball"                                        },
 	{ "penemy",             "dlls/pe.so",               "dlls/pe.dll",                    "Public Enemy"                                     },
 	{ "ponreturn",          "dlls/ponr.so",             "dlls/mp.dll",                    "Point of No Return"                               },
+	{ "primext",            "bin/server.so",            "bin/server.dll",                 "PrimeXT"                                          },
 	{ "pvk",                "dlls/hl.so",               "dlls/hl.dll",                    "Pirates, Vikings and Knights"                     },
 	{ "rc2",                "dlls/rc2.so",              "dlls/rc2.dll",                   "Rocket Crowbar 2"                                 },
 	{ "recbb2",             "dlls/recb.so",             "dlls/recb.dll",                  "Resident Evil : Cold Blood"                       },
