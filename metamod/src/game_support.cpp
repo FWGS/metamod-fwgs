@@ -1,6 +1,9 @@
 #include "precompiled.h"
 #include "build.h"
 #include "library_suffix.h"
+#include <array>
+#include <algorithm>
+#include <filesystem>
 
 // Adapted from adminmod h_export.cpp:
 //! this structure contains a list of supported mods and their dlls names
@@ -12,141 +15,136 @@ const game_modinfo_t g_known_games[] = {
 	// Previously enumerated in this sourcefile, the list is now kept in a
 	// separate file, generated based on game information stored in a
 	// convenient db.
-	{ "action",             "ahl_i386.so",              "ahl.dll",                   "Action Half-Life"                                 }, // + director's cut [2016], updated linux binary name
-	{ "ag",                 "ag_i386.so",               "ag.dll",                    "Adrenaline Gamer (Original)"                      }, // .so file by oririnal game
-	{ "ag",                 "ag.so",                    "ag.dll",                    "Adrenaline Gamer (OpenAG)"                        }, // .so file by OpenAG fork
-	{ "asheep",             nullptr,                    "hl.dll",                    "Azure Sheep"                                      }, // have no linux binary found!
-	{ "bdef",               "server.so",                "server.dll",                "Base Defense"                                     }, // placed in normal dll folder [2017]
-	{ "bg",                 "bg.so",                    "bg.dll",                    "The Battle Grounds"                               },
-	{ "bhl",                nullptr,                    "bhl.dll",                   "Brutal Half-Life"                                 }, // have no linux binary found!
-	{ "brainbread",         nullptr,                    "bb.dll",                    "Brain Bread"                                      }, // have no linux binary found!
-	{ "bshift",             "bshift.so",                "hl.dll",                    "Half-Life: Blue Shift"                            }, // ok
-	{ "bumpercars",         nullptr,                    "hl.dll",                    "Bumper Cars"                                      }, // have no linux binary found!
-	{ "buzzybots",          nullptr,                    "bb.dll",                    "BuzzyBots"                                        }, // have no linux binary found!
-	{ "ckf3",               nullptr,                    "mp.dll",                    "Chicken Fortress 3"                               }, // have no linux binary found!, checked all versions (latest - Alpha 4)
-	{ "cs10",               nullptr,                    "mp.dll",                    "Counter-Strike 1.0"                               }, // have no linux binary found!
-	{ "csv15",              nullptr,                    "mp.dll",                    "Counter-Strike 1.5"                               }, // have no linux binary found!
-	{ "cstrike",            "cs.so",                    "mp.dll",                    "Counter-Strike 1.6"                               }, // ok
-	{ "czero",              "cs.so",                    "mp.dll",                    "Counter-Strike:Condition Zero"                    }, // ok
-	{ "czeror",             "cz.so",                    "cz.dll",                    "Counter-Strike:Condition Zero Deleted Scenes"     }, // ok
-	{ "dcrisis",            "dc_i386.so",               "dc.dll",                    "Desert Crisis"                                    }, // updated linux binary name [2010]
-	{ "decay",              nullptr,                    "decay.dll",                 "Half-Life: Decay"                                 }, // have no linux binary!
-	{ "dmc",                "dmc.so",                   "dmc.dll",                   "Deathmatch Classic"                               }, // ok
-	{ "dod",                "dod.so",                   "dod.dll",                   "Day of Defeat"                                    }, // ok
-	{ "dpb",                "pb.i386.so",               "pb.dll",                    "Digital Paintball"                                }, // ok
-	{ "esf",                "hl_i386.so",               "hl.dll",                    "Earth's Special Forces"                           }, // full linux version
-	{ "esf",                "../linuxdll/hl_i386.so",   "hl.dll",                    "Earth's Special Forces (Legacy)"                  }, // workaround for basic-linux version
-	{ "existence",          nullptr,                    "existence.dll",             "Existence"                                        }, // have no linux binary found!
-	{ "firearms",           nullptr,                    "firearms.dll",              "Firearms"                                         }, // have no linux binary found!
-	{ "frontline",          "front_i386.so",            "frontline.dll",             "Frontline Force"                                  }, // updated linux binary name [2012]
-	{ "gangstawars",        nullptr,                    "gwars27.dll",               "Gangsta Wars"                                     }, // have no linux binary found!
-	{ "gangwars",           nullptr,                    "mp.dll",                    "Gangwars"                                         }, // have no linux binary found!
-	{ "gearbox",            "opfor.so",                 "opfor.dll",                 "Opposing Force"                                   }, //ok
-	{ "globalwarfare",      "gw_i386.so",               "mp.dll",                    "Global Warfare"                                   }, //updated linux binary name [2012]
-	{ "goldeneye",          nullptr,                    "mp.dll",                    "Goldeneye"                                        }, // have no linux binary found!
-	{ "hcfrenzy",           "hcfrenzy.so",              "hcfrenzy.dll",              "Headcrab Frenzy"                                  },
-	{ "hl15we",             "hl.so",                    "hl.dll",                    "Half-Life 1.5: Weapon Edition"                    },
-	{ "hlrally",            "hlr.so",                   "hlrally.dll",               "HL-Rally"                                         },
-	{ "holywars",           "hl.so",                    "holywars.dll",              "Holy Wars"                                        },
-	{ "hostileintent",      "hl.so",                    "hl.dll",                    "Hostile Intent"                                   },
-	{ "ios",                "ios.so",                   "ios.dll",                   "International Online Soccer"                      },
-	{ "judgedm",            "judge.so",                 "mp.dll",                    "Judgement"                                        },
-	{ "kanonball",          "hl.so",                    "kanonball.dll",             "Kanonball"                                        },
-	{ "monkeystrike",       "ms.so",                    "monkey.dll",                "Monkeystrike"                                     },
-	{ "MorbidPR",           "morbid.so",                "morbid.dll",                "Morbid Inclination"                               },
-	{ "movein",             "hl.so",                    "hl.dll",                    "Move In!"                                         },
-	{ "msc",                nullptr,                    "ms.dll",                    "Master Sword Continued"                           },
-	{ "ns",                 "ns.so",                    "ns.dll",                    "Natural Selection"                                },
-	{ "nsp",                "ns.so",                    "ns.dll",                    "Natural Selection Beta"                           },
-	{ "og",                 "og.so",                    "og.dll",                    "Over Ground"                                      },
-	{ "ol",                 "ol.so",                    "hl.dll",                    "Outlawsmod"                                       },
-	{ "ops1942",            "spirit.so",                "spirit.dll",                "Operations 1942"                                  },
-	{ "osjb",               "osjb.so",                  "jail.dll",                  "Open-Source Jailbreak"                            },
-	{ "outbreak",           nullptr,                    "hl.dll",                    "Out Break"                                        }, // have no linux binary found!
-	{ "oz",                 "mp.so",                    "mp.dll",                    "Oz Deathmatch"                                    },
-	{ "paintball",          "pb.so",                    "mp.dll",                    "Paintball"                                        },
-	{ "penemy",             "pe.so",                    "pe.dll",                    "Public Enemy"                                     },
-	{ "ponreturn",          "ponr.so",                  "mp.dll",                    "Point of No Return"                               },
-	{ "pvk",                "hl.so",                    "hl.dll",                    "Pirates, Vikings and Knights"                     },
-	{ "rc2",                "rc2.so",                   "rc2.dll",                   "Rocket Crowbar 2"                                 },
-	{ "recbb2",             "recb.so",                  "recb.dll",                  "Resident Evil : Cold Blood"                       },
-	{ "rewolf",             nullptr,                    "gunman.dll",                "Gunman Chronicles"                                }, // have no linux binary found!
-	{ "ricochet",           "ricochet.so",              "mp.dll",                    "Ricochet"                                         },
-	{ "rockcrowbar",        "rc.so",                    "rc.dll",                    "Rocket Crowbar"                                   },
-	{ "rockcrowbar",        "rc_i386.so",               "rc.dll",                    "Rocket Crowbar"                                   },
-	{ "rspecies",           "hl.so",                    "hl.dll",                    "Rival Species"                                    },
-	{ "scihunt",            "shunt.so",                 "shunt.dll",                 "Scientist Hunt"                                   },
-	{ "ship",               "ship.so",                  "ship.dll",                  "The Ship"                                         },
-	{ "si",                 "si.so",                    "si.dll",                    "Science & Industry"                               },
-	{ "snow",               "snow.so",                  "snow.dll",                  "Snow-War"                                         },
-	{ "stargatetc",         "hl.so",                    "hl.dll",                    "StargateTC (Leaacy v1.x)"                         },
-	{ "stargatetc",         "stc_i386.so",              "hl.dll",                    "StargateTC (v2.x)"                                },
-	{ "stargatetc",         "stc_i386_opt.so",          "hl.dll",                    "StargateTC (v2.x, optimised binary)"              },
-	{ "svencoop",           "hl.so",                    "hl.dll",                    "Sven Coop (Legacy)"                               }, // Metamod-r have problems with mod!
-	{ "svencoop",           "server.so",                "server.dll",                "Sven Coop (Steam)"                                }, // Metamod-r have problems with mod!
-	{ "swarm",              "swarm.so",                 "swarm.dll",                 "Swarm"                                            },
-	{ "tfc",                "tfc.so",                   "tfc.dll",                   "Team Fortress Classic"                            },
-	{ "thewastes",          "thewastes.so",             "thewastes.dll",             "The Wastes"                                       },
-	{ "timeless",           "pt.so",                    "timeless.dll",              "Project Timeless"                                 },
-	{ "tod",                "hl.so",                    "hl.dll",                    "Tour of Duty"                                     },
-	{ "trainhunters",       "th.so",                    "th.dll",                    "Train Hunters"                                    },
-	{ "ts",	                "ts_i686.so",               "mp.dll",		         	 "The Specialists"                                  },
-	{ "ts",                 "ts_i386.so",               "mp.dll",                    "The Specialists"                                  },
-	{ "tt",                 "tt.so",                    "tt.dll",                    "The Trenches"                                     },
-	{ "underworld",         "uw.so",                    "uw.dll",                    "Underworld Bloodline"                             },
-	{ "valve",              "hl.so",                    "hl.dll",                    "Half-Life"                                        },
-	{ "vs",                 "vs.so",                    "mp.dll",                    "VampireSlayer"                                    },
-	{ "wantedhl",           "hl.so",                    "wanted.dll",                "Wanted!"                                          },
-	{ "wizardwars",         "wizardwars_i486.so",       "wizardwars.dll",            "Wizard Wars (Steam)"                              },
-	{ "wizardwars_beta",    "wizardwars_i486.so",       "wizardwars.dll",            "Wizard Wars Beta (Steam)"                         },
-	{ "wizwars",            "mp.so",                    "hl.dll",                    "Wizard Wars (Legacy)"                             },
-	{ "wormshl",            "wormshl_i586.so",          "wormshl.dll",               "WormsHL (Legacy)"                                 },
-	{ "wormshl",            "wormshl_i686.so",          "wormshl.dll",               "WormsHL (Steam)"                                  },
-	{ "zp",                 "hl_i386.so",               "mp.dll",                    "Zombie Panic"                                     },
-
+	{ "action",             "dlls/ahl_i386.so",         "dlls/ahl.dll",                   "Action Half-Life"                                 }, // + director's cut [2016], updated linux binary name
+	{ "ag",                 "dlls/ag_i386.so",          "dlls/ag.dll",                    "Adrenaline Gamer (Original)"                      }, // .so file by oririnal game
+	{ "ag",                 "dlls/ag.so",               "dlls/ag.dll",                    "Adrenaline Gamer (OpenAG)"                        }, // .so file by OpenAG fork
+	{ "asheep",             nullptr,                    "dlls/hl.dll",                    "Azure Sheep"                                      }, // have no linux binary found!
+	{ "bdef",               "dlls/server.so",           "dlls/server.dll",                "Base Defense"                                     }, // placed in normal dll folder [2017]
+	{ "bg",                 "dlls/bg.so",               "dlls/bg.dll",                    "The Battle Grounds"                               },
+	{ "bhl",                nullptr,                    "dlls/bhl.dll",                   "Brutal Half-Life"                                 }, // have no linux binary found!
+	{ "brainbread",         nullptr,                    "dlls/bb.dll",                    "Brain Bread"                                      }, // have no linux binary found!
+	{ "bshift",             "dlls/bshift.so",           "dlls/hl.dll",                    "Half-Life: Blue Shift"                            }, // ok
+	{ "bumpercars",         nullptr,                    "dlls/hl.dll",                    "Bumper Cars"                                      }, // have no linux binary found!
+	{ "buzzybots",          nullptr,                    "dlls/bb.dll",                    "BuzzyBots"                                        }, // have no linux binary found!
+	{ "ckf3",               nullptr,                    "dlls/mp.dll",                    "Chicken Fortress 3"                               }, // have no linux binary found!, checked all versions (latest - Alpha 4)
+	{ "cs10",               nullptr,                    "dlls/mp.dll",                    "Counter-Strike 1.0"                               }, // have no linux binary found!
+	{ "csv15",              nullptr,                    "dlls/mp.dll",                    "Counter-Strike 1.5"                               }, // have no linux binary found!
+	{ "cstrike",            "dlls/cs.so",               "dlls/mp.dll",                    "Counter-Strike 1.6"                               }, // ok
+	{ "czero",              "dlls/cs.so",               "dlls/mp.dll",                    "Counter-Strike:Condition Zero"                    }, // ok
+	{ "czeror",             "dlls/cz.so",               "dlls/cz.dll",                    "Counter-Strike:Condition Zero Deleted Scenes"     }, // ok
+	{ "dcrisis",            "dlls/dc_i386.so",          "dlls/dc.dll",                    "Desert Crisis"                                    }, // updated linux binary name [2010]
+	{ "decay",              nullptr,                    "dlls/decay.dll",                 "Half-Life: Decay"                                 }, // have no linux binary!
+	{ "dmc",                "dlls/dmc.so",              "dlls/dmc.dll",                   "Deathmatch Classic"                               }, // ok
+	{ "dod",                "dlls/dod.so",              "dlls/dod.dll",                   "Day of Defeat"                                    }, // ok
+	{ "dpb",                "dlls/pb.i386.so",          "dlls/pb.dll",                    "Digital Paintball"                                }, // ok
+	{ "esf",                "dlls/hl_i386.so",          "dlls/hl.dll",                    "Earth's Special Forces"                           }, // full linux version
+	{ "esf",                "linuxdll/hl_i386.so",      "dlls/hl.dll",                    "Earth's Special Forces (Legacy)"                  }, // workaround for basic-linux version
+	{ "existence",          nullptr,                    "dlls/existence.dll",             "Existence"                                        }, // have no linux binary found!
+	{ "firearms",           nullptr,                    "dlls/firearms.dll",              "Firearms"                                         }, // have no linux binary found!
+	{ "frontline",          "dlls/front_i386.so",       "dlls/frontline.dll",             "Frontline Force"                                  }, // updated linux binary name [2012]
+	{ "gangstawars",        nullptr,                    "dlls/gwars27.dll",               "Gangsta Wars"                                     }, // have no linux binary found!
+	{ "gangwars",           nullptr,                    "dlls/mp.dll",                    "Gangwars"                                         }, // have no linux binary found!
+	{ "gearbox",            "dlls/opfor.so",            "dlls/opfor.dll",                 "Opposing Force"                                   }, //ok
+	{ "globalwarfare",      "dlls/gw_i386.so",          "dlls/mp.dll",                    "Global Warfare"                                   }, //updated linux binary name [2012]
+	{ "goldeneye",          nullptr,                    "dlls/mp.dll",                    "Goldeneye"                                        }, // have no linux binary found!
+	{ "hcfrenzy",           "dlls/hcfrenzy.so",         "dlls/hcfrenzy.dll",              "Headcrab Frenzy"                                  },
+	{ "hl15we",             "dlls/hl.so",               "dlls/hl.dll",                    "Half-Life 1.5: Weapon Edition"                    },
+	{ "hlrally",            "dlls/hlr.so",              "dlls/hlrally.dll",               "HL-Rally"                                         },
+	{ "holywars",           "dlls/hl.so",               "dlls/holywars.dll",              "Holy Wars"                                        },
+	{ "hostileintent",      "dlls/hl.so",               "dlls/hl.dll",                    "Hostile Intent"                                   },
+	{ "ios",                "dlls/ios.so",              "dlls/ios.dll",                   "International Online Soccer"                      },
+	{ "judgedm",            "dlls/judge.so",            "dlls/mp.dll",                    "Judgement"                                        },
+	{ "kanonball",          "dlls/hl.so",               "dlls/kanonball.dll",             "Kanonball"                                        },
+	{ "monkeystrike",       "dlls/ms.so",               "dlls/monkey.dll",                "Monkeystrike"                                     },
+	{ "MorbidPR",           "dlls/morbid.so",           "dlls/morbid.dll",                "Morbid Inclination"                               },
+	{ "movein",             "dlls/hl.so",               "dlls/hl.dll",                    "Move In!"                                         },
+	{ "msc",                nullptr,                    "dlls/ms.dll",                    "Master Sword Continued"                           },
+	{ "ns",                 "dlls/ns.so",               "dlls/ns.dll",                    "Natural Selection"                                },
+	{ "nsp",                "dlls/ns.so",               "dlls/ns.dll",                    "Natural Selection Beta"                           },
+	{ "og",                 "dlls/og.so",               "dlls/og.dll",                    "Over Ground"                                      },
+	{ "ol",                 "dlls/ol.so",               "dlls/hl.dll",                    "Outlawsmod"                                       },
+	{ "ops1942",            "dlls/spirit.so",           "dlls/spirit.dll",                "Operations 1942"                                  },
+	{ "osjb",               "dlls/osjb.so",             "dlls/jail.dll",                  "Open-Source Jailbreak"                            },
+	{ "outbreak",           nullptr,                    "dlls/hl.dll",                    "Out Break"                                        }, // have no linux binary found!
+	{ "oz",                 "dlls/mp.so",               "dlls/mp.dll",                    "Oz Deathmatch"                                    },
+	{ "paintball",          "dlls/pb.so",               "dlls/mp.dll",                    "Paintball"                                        },
+	{ "penemy",             "dlls/pe.so",               "dlls/pe.dll",                    "Public Enemy"                                     },
+	{ "ponreturn",          "dlls/ponr.so",             "dlls/mp.dll",                    "Point of No Return"                               },
+	{ "pvk",                "dlls/hl.so",               "dlls/hl.dll",                    "Pirates, Vikings and Knights"                     },
+	{ "rc2",                "dlls/rc2.so",              "dlls/rc2.dll",                   "Rocket Crowbar 2"                                 },
+	{ "recbb2",             "dlls/recb.so",             "dlls/recb.dll",                  "Resident Evil : Cold Blood"                       },
+	{ "rewolf",             nullptr,                    "dlls/gunman.dll",                "Gunman Chronicles"                                }, // have no linux binary found!
+	{ "ricochet",           "dlls/ricochet.so",         "dlls/mp.dll",                    "Ricochet"                                         },
+	{ "rockcrowbar",        "dlls/rc.so",               "dlls/rc.dll",                    "Rocket Crowbar"                                   },
+	{ "rockcrowbar",        "dlls/rc_i386.so",          "dlls/rc.dll",                    "Rocket Crowbar"                                   },
+	{ "rspecies",           "dlls/hl.so",               "dlls/hl.dll",                    "Rival Species"                                    },
+	{ "scihunt",            "dlls/shunt.so",            "dlls/shunt.dll",                 "Scientist Hunt"                                   },
+	{ "ship",               "dlls/ship.so",             "dlls/ship.dll",                  "The Ship"                                         },
+	{ "si",                 "dlls/si.so",               "dlls/si.dll",                    "Science & Industry"                               },
+	{ "snow",               "dlls/snow.so",             "dlls/snow.dll",                  "Snow-War"                                         },
+	{ "stargatetc",         "dlls/hl.so",               "dlls/hl.dll",                    "StargateTC (Leaacy v1.x)"                         },
+	{ "stargatetc",         "dlls/stc_i386.so",         "dlls/hl.dll",                    "StargateTC (v2.x)"                                },
+	{ "stargatetc",         "dlls/stc_i386_opt.so",     "dlls/hl.dll",                    "StargateTC (v2.x, optimised binary)"              },
+	{ "svencoop",           "dlls/hl.so",               "dlls/hl.dll",                    "Sven Coop (Legacy)"                               }, // Metamod-r have problems with mod!
+	{ "svencoop",           "dlls/server.so",           "dlls/server.dll",                "Sven Coop (Steam)"                                }, // Metamod-r have problems with mod!
+	{ "swarm",              "dlls/swarm.so",            "dlls/swarm.dll",                 "Swarm"                                            },
+	{ "tfc",                "dlls/tfc.so",              "dlls/tfc.dll",                   "Team Fortress Classic"                            },
+	{ "thewastes",          "dlls/thewastes.so",        "dlls/thewastes.dll",             "The Wastes"                                       },
+	{ "timeless",           "dlls/pt.so",               "dlls/timeless.dll",              "Project Timeless"                                 },
+	{ "tod",                "dlls/hl.so",               "dlls/hl.dll",                    "Tour of Duty"                                     },
+	{ "trainhunters",       "dlls/th.so",               "dlls/th.dll",                    "Train Hunters"                                    },
+	{ "ts",	                "dlls/ts_i686.so",          "dlls/mp.dll",                    "The Specialists"                                  },
+	{ "ts",                 "dlls/ts_i386.so",          "dlls/mp.dll",                    "The Specialists"                                  },
+	{ "tt",                 "dlls/tt.so",               "dlls/tt.dll",                    "The Trenches"                                     },
+	{ "underworld",         "dlls/uw.so",               "dlls/uw.dll",                    "Underworld Bloodline"                             },
+	{ "valve",              "dlls/hl.so",               "dlls/hl.dll",                    "Half-Life"                                        },
+	{ "vs",                 "dlls/vs.so",               "dlls/mp.dll",                    "VampireSlayer"                                    },
+	{ "wantedhl",           "dlls/hl.so",               "dlls/wanted.dll",                "Wanted!"                                          },
+	{ "wizardwars",         "dlls/wizardwars_i486.so",  "dlls/wizardwars.dll",            "Wizard Wars (Steam)"                              },
+	{ "wizardwars_beta",    "dlls/wizardwars_i486.so",  "dlls/wizardwars.dll",            "Wizard Wars Beta (Steam)"                         },
+	{ "wizwars",            "dlls/mp.so",               "dlls/hl.dll",                    "Wizard Wars (Legacy)"                             },
+	{ "wormshl",            "dlls/wormshl_i586.so",     "dlls/wormshl.dll",               "WormsHL (Legacy)"                                 },
+	{ "wormshl",            "dlls/wormshl_i686.so",     "dlls/wormshl.dll",               "WormsHL (Steam)"                                  },
+	{ "zp",                 "dlls/hl_i386.so",          "dlls/mp.dll",                    "Zombie Panic"                                     },
 
 	// End of list terminator:
 	{ nullptr, nullptr, nullptr, nullptr }
 };
 
 // Find a modinfo corresponding to the given game name.
-static const game_modinfo_t *lookup_game(const char *name, char *libname, size_t bufsize)
+static const game_modinfo_t *lookup_game(const char *name, char *libpath, size_t bufsize)
 {
-	char library_path[MAX_PATH];
-	char library_name[MAX_PATH];
-	char library_raw_name[MAX_PATH];
+	std::array<char, MAX_PATH> library_name = {};
+	std::array<char, MAX_PATH> library_raw_name = {};
 
 	for (auto& known : g_known_games) {
 		if (known.name && !Q_stricmp(known.name, name)) {
 #ifdef _WIN32
-			const char* knowndll = known.win_dll;
+			const char *library_path_string = known.win_dll;
 #else
-			const char* knowndll = known.linux_so;
+			const char *library_path_string = known.linux_so;
 #endif
-			if (!knowndll)
+			if (!library_path_string)
 				continue;
 
+			std::filesystem::path library_src_path(library_path_string);
+
 #if XASH_ARCHITECTURE == ARCHITECTURE_X86 && (XASH_WIN32 || XASH_LINUX || XASH_APPLE)
-			Q_snprintf(library_path, sizeof(library_path), "dlls/%s", knowndll);
-			if (is_file_exists_in_gamedir(library_path))
+			if (is_file_exists_in_gamedir(library_src_path.string().c_str()))
 			{
-				Q_strncpy(libname, knowndll, bufsize);
+				Q_strncpy(libpath, library_src_path.string().c_str(), bufsize);
 				return &known;
 			}
 #else
-			// extract raw library name, remove extension & intel suffix
-			const char *end = Q_strchr(knowndll, '.');
-			const int length = end ? (end - knowndll) : Q_strlen(knowndll);
-			Q_strncpy(library_raw_name, knowndll, length);
-			library_raw_name[length] = '\0';
+			std::string library_stem = library_src_path.stem().string();
+			std::copy_n(library_stem.c_str(), library_stem.size() + 1, library_raw_name.begin());
+			COM_StripIntelSuffix(library_raw_name.data());
+			COM_GenerateCommonLibraryName(library_raw_name.data(), library_name.data(), library_name.size());
 
-			COM_StripIntelSuffix(library_raw_name);
-			COM_GenerateCommonLibraryName(library_raw_name, library_name, sizeof(library_name));
-			Q_snprintf(library_path, sizeof(library_path), "dlls/%s", library_name);
-
-			if (is_file_exists_in_gamedir(library_path))
+			std::filesystem::path library_full_path = library_src_path.parent_path() / library_name.data();
+			if (is_file_exists_in_gamedir(library_full_path.string().c_str()))
 			{
-				Q_strncpy(libname, library_name, bufsize);
+				Q_strncpy(libpath, library_full_path.string().c_str(), bufsize);
 				return &known;
 			}
 #endif
@@ -245,11 +243,11 @@ bool setup_gamedll(gamedll_t *gamedll)
 	bool override = false;
 	const game_modinfo_t *known;
 	const char *knownfn = nullptr;
-	char libname[MAX_PATH];
+	char libpath[MAX_PATH];
 
 	// First, look for a known game, based on gamedir.
-	if ((known = lookup_game(gamedll->name, libname, sizeof(libname)))) {
-		knownfn = libname;
+	if ((known = lookup_game(gamedll->name, libpath, sizeof(libpath)))) {
+		knownfn = libpath;
 	}
 
 	// Use override-dll if specified.
@@ -273,7 +271,7 @@ bool setup_gamedll(gamedll_t *gamedll)
 	}
 	// Else use Known-list dll.
 	else if (known) {
-		Q_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/dlls/%s", gamedll->gamedir, knownfn);
+		Q_snprintf(gamedll->pathname, sizeof(gamedll->pathname), "%s/%s", gamedll->gamedir, knownfn);
 	}
 	else {
 		// Neither override nor known-list found a gamedll.
@@ -292,7 +290,7 @@ bool setup_gamedll(gamedll_t *gamedll)
 	// If found, store also the supposed "real" dll path based on the
 	// gamedir, in case it differs from the "override" dll path.
 	if (known && override) {
-		Q_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname), "%s/dlls/%s", gamedll->gamedir, knownfn);
+		Q_snprintf(gamedll->real_pathname, sizeof(gamedll->real_pathname), "%s/%s", gamedll->gamedir, knownfn);
 	}
 	else {
 		Q_strlcpy(gamedll->real_pathname, gamedll->pathname);
