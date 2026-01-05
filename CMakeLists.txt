@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
-option(USE_STATIC_LIBSTDC "Enables static linking libstdc++." OFF)
+option(USE_STATIC_LIBSTDC "Enables static linking libstdc++" OFF)
 option(BUILD_EXAMPLE "Build example plugin (if available)" OFF)
 
 set(CMAKE_CXX_STANDARD 17)

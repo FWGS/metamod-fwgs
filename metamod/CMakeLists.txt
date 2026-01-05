@@ -45,13 +45,11 @@ set(METAMOD_SOURCES
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.rc")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.def")
-elseif(XASH_LINUX AND XASH_X86)
-    list(APPEND METAMOD_SOURCES "src/glibc_compat.cpp")
 endif()
 
 add_library(metamod SHARED ${METAMOD_SOURCES})
 add_dependencies(metamod appversion)
-
+set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(metamod PRIVATE
 	${PROJECT_HEADERS_DIR}
 )
@@ -63,7 +61,19 @@ if (MSVC)
     list(APPEND METAMOD_COMPILE_OPTIONS /W3 /EHsc)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
-    list(APPEND METAMOD_COMPILE_OPTIONS -Wall -Wextra -Wno-unused-parameter -fno-exceptions -fno-builtin -Wno-unknown-pragmas)
+    list(APPEND METAMOD_COMPILE_OPTIONS
+		-Wall
+		-Wextra
+		-Wno-unused-parameter
+		-fno-exceptions
+		-fno-builtin
+		-Wno-unknown-pragmas
+		-Wno-stringop-truncation
+		-Wno-format-truncation
+		-Wno-class-memaccess
+		-fcf-protection=none
+		-Wno-maybe-uninitialized
+		-Wno-unused-but-set-variable)
 
     # debug mode flags
     list(APPEND METAMOD_COMPILE_OPTIONS
@@ -78,16 +88,6 @@ else()
 		$<$<NOT:$<CONFIG:Debug>>:-fno-stack-protector>)
 
     list(APPEND METAMOD_LINK_OPTIONS $<$<CONFIG:Release>:-s>) # strip debug symbols, but only in strict release mode
-    list(APPEND METAMOD_COMPILE_OPTIONS -mtune=generic -msse3)
-
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
-            list(APPEND METAMOD_COMPILE_OPTIONS -Wno-stringop-truncation -Wno-format-truncation -Wno-class-memaccess -fcf-protection=none)
-        endif()
-        list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized -Wno-unused-but-set-variable)
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        list(APPEND METAMOD_COMPILE_OPTIONS -Wno-maybe-uninitialized)
-    endif()    
 endif()
 
 # MSVC: add configuration-specific flags using generator expressions to avoid conflicts such as /RTC1 vs /O2
@@ -101,7 +101,6 @@ endif()
 
 target_compile_options(metamod PRIVATE ${METAMOD_COMPILE_OPTIONS})
 target_link_options(metamod PRIVATE ${METAMOD_LINK_OPTIONS})
-set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(metamod PRIVATE library_suffix)
 
 if (UNIX)
@@ -113,17 +112,13 @@ endif()
 if (USE_STATIC_LIBSTDC)
     target_compile_definitions(metamod PRIVATE BUILD_STATIC_LIBSTDC)
     if (NOT MSVC)
-        list(APPEND METAMOD_LINK_OPTIONS -static-libgcc -static-libstdc++)
-        if (COMMAND target_link_options)
-            target_link_options(metamod PRIVATE -static-libgcc -static-libstdc++)
-        else()
-            set_target_properties(metamod PROPERTIES LINK_FLAGS "${METAMOD_LINK_OPTIONS}")
-        endif()
+        target_link_options(metamod PRIVATE -static-libgcc -static-libstdc++)
     endif()
 endif()
 
 target_compile_definitions(metamod PRIVATE
     METAMOD_CORE
+	$<$<NOT:$<CONFIG:Debug>>:NDEBUG>
 )
 
 if (WIN32)
@@ -133,7 +128,6 @@ else()
     target_compile_definitions(metamod PRIVATE
         _LINUX
         LINUX
-        _GLIBCXX_USE_CXX11_ABI=0
         _stricmp=strcasecmp
         _strnicmp=strncasecmp
         _strdup=strdup
@@ -146,9 +140,6 @@ else()
         _snprintf=snprintf
     )
 endif()
-
-# NDEBUG in release mode
-target_compile_definitions(metamod PRIVATE $<$<NOT:$<CONFIG:Debug>>:NDEBUG>)
 
 # required for compliance with Xash3D FWGS library naming scheme
 set_target_postfix(metamod)
