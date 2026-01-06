@@ -57,37 +57,27 @@ else()
   endif()
 endif()
 
-# Appversion target: run platform-specific script if present
-set(APPVERSION_SCRIPT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
-set(APPVERSION_HEADER "${CMAKE_SOURCE_DIR}/version/appversion.h")
-
-# Create custom target appversion
+# Appversion target: run platform-specific script
 if(WIN32)
-  set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/metamod/msvc/PreBuild.bat")
+    set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/metamod/version/appversion.bat")
+    file(TO_NATIVE_PATH "${MSVC_PREBUILD}" SCRIPT_PATH_NATIVE)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/metamod/version" VERSION_DIR_NATIVE)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" PROJECT_ROOT_NATIVE)
 
-  if(EXISTS "${MSVC_PREBUILD}")
-    file(TO_NATIVE_PATH "${MSVC_PREBUILD}" MSVC_PREBUILD_NATIVE)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/metamod/version" MSVC_VERSION_NATIVE)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" MSVC_ROOT_NATIVE)
-
-    add_custom_command(OUTPUT ${APPVERSION_HEADER}
-        COMMAND ${CMAKE_COMMAND} -E echo "Running PreBuild.bat"
-        COMMAND cmd /C call "${MSVC_PREBUILD_NATIVE}" "${MSVC_VERSION_NATIVE}" "${MSVC_ROOT_NATIVE}"
+    add_custom_command(OUTPUT appversion_command
+        COMMAND cmd /C call "${SCRIPT_PATH_NATIVE}" "${VERSION_DIR_NATIVE}" "${PROJECT_ROOT_NATIVE}"
         COMMENT "Generating application version header"
         VERBATIM
     )
-
-    add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
-  endif()
-elseif(EXISTS "${APPVERSION_SCRIPT}" AND NOT WIN32)
-  add_custom_command(OUTPUT ${APPVERSION_HEADER}
-    COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" bash "${APPVERSION_SCRIPT}" "${CMAKE_SOURCE_DIR}"
-    COMMENT "Generating application version files (sh)"
-    VERBATIM
-  )
-  add_custom_target(appversion DEPENDS ${APPVERSION_HEADER})
+	add_custom_target(appversion DEPENDS appversion_command)
 else()
-  message(STATUS "No appversion script found; skipping appversion target")
+    set(APPVERSION_SCRIPT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
+    add_custom_command(OUTPUT appversion_command
+        COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" bash "${APPVERSION_SCRIPT}" "${CMAKE_SOURCE_DIR}"
+        COMMENT "Generating application version files (sh)"
+        VERBATIM
+    )
+    add_custom_target(appversion DEPENDS appversion_command)
 endif()
 
 add_subdirectory(library-suffix)

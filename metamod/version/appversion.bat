@@ -1,7 +1,7 @@
 @setlocal enableextensions enabledelayedexpansion
 @echo off
 ::
-:: Pre-build auto-versioning script
+:: Auto-versioning script
 ::
 
 chcp 65001
