@@ -1,7 +1,5 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by ReVoice.rc
-
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

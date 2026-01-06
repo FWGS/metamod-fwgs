@@ -72,13 +72,13 @@ BEGIN
 	BEGIN
 		BLOCK "041904b0"
 		BEGIN
-			VALUE "Comments", "Metamod-FWGS is more flexible and cross-platform fork of Metamod-R. Metamod allows running multiple mod-like plugin DLLs, to add functionality or change the behavior of the running HLDS game mod."
+			VALUE "Comments", "Fork of Metamod-R for use with Xash3D FWGS engine on many different architectures & platforms."
 			VALUE "FileDescription", "Metamod-FWGS Library"
 			VALUE "FileVersion", APP_VERSION_STRD
 			VALUE "InternalName", "Metamod-FWGS"
-			VALUE "LegalCopyright", "Copyright (c) 2025"
-			VALUE "OriginalFilename", "metamod_mm.dll"
-			VALUE "ProductName", "Metamod"
+			VALUE "LegalCopyright", "Copyright (c) Flying With Gauss Team"
+			VALUE "OriginalFilename", "metamod.dll"
+			VALUE "ProductName", "Metamod-FWGS"
 			VALUE "ProductVersion", APP_VERSION_STRD
 			#if APP_VERSION_FLAGS != 0x0L
 				VALUE "SpecialBuild", APP_VERSION_SPECIALBUILD
