@@ -6,9 +6,10 @@ Original Metamod-R contains a lot of x86 JIT optimizations, patching hacks, cons
 
 ## Documentation
 
-* [Actual documentation](https://github.com/rehlds/metamod-r/wiki) (![en](https://i.imgur.com/rm67tUZ.png) **English** and ![ru](https://i.imgur.com/ItziiKg.png) **Russian**)
-* ![en](https://i.imgur.com/rm67tUZ.png) Actual [list of supported games](https://github.com/rehlds/metamod-r/wiki/Supported-games)
-* ![ru](https://i.imgur.com/ItziiKg.png) Актуальный [список поддерживаемых игр](https://github.com/rehlds/metamod-r/wiki/Поддерживаемые-игры)
+Documentation is similar with Metamod-R, so we do not have any specific documentation for this project.
+
+* ![en](https://i.imgur.com/rm67tUZ.png) [English documentation](https://rehlds.dev/docs/metamod-r/)
+* ![ru](https://i.imgur.com/ItziiKg.png) [Русская документация](https://rehlds.dev/ru/docs/metamod-r/)
 
 ## Build instructions
 ### Windows
