@@ -5,7 +5,6 @@ project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
 option(USE_STATIC_LIBSTDC "Enables static linking libstdc++" OFF)
-option(BUILD_EXAMPLE "Build example plugin (if available)" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -83,22 +82,6 @@ endif()
 add_subdirectory(library-suffix)
 add_subdirectory(metamod)
 
-# Optionally build example plugin (use CMakeLists in example if present, otherwise try existing Makefile)
-if(BUILD_EXAMPLE)
-  if(EXISTS "${CMAKE_SOURCE_DIR}/metamod/extra/example/CMakeLists.txt")
-    add_subdirectory(metamod/extra/example)
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/metamod/extra/example/Makefile")
-    add_custom_target(example
-      COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_SOURCE_DIR}/metamod/extra/example" ${CMAKE_MAKE_PROGRAM}
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/metamod/extra/example"
-      COMMENT "Building example plugin using the provided Makefile"
-    )
-  else()
-    message(STATUS "No example build files found under metamod/extra/example")
-  endif()
-endif()
-
 message(STATUS "Configuration summary:")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  USE_STATIC_LIBSTDC option: ${USE_STATIC_LIBSTDC}")
-message(STATUS "  BUILD_EXAMPLE option: ${BUILD_EXAMPLE}")
