@@ -113,10 +113,7 @@ void cmd_meta_version()
 		META_CONS("usage: meta version");
 		return;
 	}
-
-	META_CONS("Metamod-FWGS v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
-	META_CONS("Metamod-FWGS build: " __TIME__ " " __DATE__ "");
-	META_CONS("Metamod-FWGS from: " APP_COMMIT_URL APP_COMMIT_SHA "");
+	meta_print_version_info();
 }
 
 // "meta version" client command.
@@ -126,16 +123,12 @@ void client_meta_version(edict_t *pEntity)
 		META_CLIENT(pEntity, "usage: meta version");
 		return;
 	}
-
-	META_CONS("Metamod-FWGS v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
-	META_CONS("Metamod-FWGS build: " __TIME__ " " __DATE__ "");
-	META_CONS("Metamod-FWGS from: " APP_COMMIT_URL APP_COMMIT_SHA "");
+	meta_print_version_info();
 }
 
 // "meta gpl" console command.
 void cmd_meta_gpl()
 {
-	META_CONS("Metamod-FWGS version " __TIME__ " " __DATE__);
 	META_CONS("Copyright (c) 2025 Flying With Gauss Team (rebuild of original Metamod by Will Day)");
 	META_CONS("");
 	META_CONS("   Metamod-FWGS is free software; you can redistribute it and/or");

@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "build_info.h"
 #include <type_traits>
 
 cvar_t g_meta_version = { "metamod_version", APP_VERSION, FCVAR_SERVER, 0, nullptr };
@@ -51,15 +52,12 @@ void metamod_startup()
 	Q_snprintf(execFile,   sizeof execFile,   "%s/%s", g_config->directory(), EXEC_CFG);
 
 	META_CONS("   ");
-	META_CONS("   Metamod-FWGS version %s Copyright (c) 2025 Flying With Gauss Team (rebuild of original Metamod by Will Day and Jussi Kivilinna)", APP_VERSION);
+	META_CONS("   Metamod-FWGS (c) 2025 Flying With Gauss Team (rebuild of original Metamod by Will Day and Jussi Kivilinna)");
 	META_CONS("   Metamod-FWGS comes with ABSOLUTELY NO WARRANTY; for details type `meta gpl'.");
 	META_CONS("   This is free software, and you are welcome to redistribute it");
 	META_CONS("   under certain conditions; type `meta gpl' for details.");
-	META_CONS("   ");
 
-	META_CONS("Metamod-FWGS v%s, API (%s)", APP_VERSION, META_INTERFACE_VERSION);
-	META_CONS("Metamod-FWGS build: " __TIME__ " " __DATE__ "");
-	META_CONS("Metamod-FWGS from: " APP_COMMIT_URL APP_COMMIT_SHA "");
+	meta_print_version_info();
 
 	// Get gamedir, very early on, because it seems we need it all over the
 	// place here at the start.
@@ -447,4 +445,16 @@ bool meta_load_gamedll()
 
 	META_LOG("Game DLL for '%s' loaded successfully", g_GameDLL.desc);
 	return true;
+}
+
+void meta_print_version_info()
+{
+	META_CONS("   ");
+	META_CONS("Metamod-FWGS version %s", APP_VERSION);
+	META_CONS("Platform     : %s", BuildInfo::GetPlatform());
+	META_CONS("Architecture : %s", BuildInfo::GetArchitecture());
+	META_CONS("Build date   : " __TIME__ " " __DATE__);
+	META_CONS("Commit hash  : " APP_COMMIT_SHA);
+	META_CONS("API version  : " META_INTERFACE_VERSION);
+	META_CONS("   ");
 }
