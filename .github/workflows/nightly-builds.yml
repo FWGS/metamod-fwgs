@@ -64,7 +64,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: |
           cmake --build . --parallel $(nproc)
-          cmake --install . --prefix "${{ github.workspace }}/bundle"
+          cmake --install . --prefix "${{ github.workspace }}/bundle/addons/metamod"
 
       - name: Pack artifact files to archive (Linux)
         if: runner.os == 'Linux'
