@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
-option(USE_STATIC_LIBSTDC "Enables static linking libstdc++" OFF)
+option(USE_STATIC_RUNTIME "Enables static linking runtime library" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -84,4 +84,4 @@ add_subdirectory(metamod)
 
 message(STATUS "Configuration summary:")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  USE_STATIC_LIBSTDC option: ${USE_STATIC_LIBSTDC}")
+message(STATUS "  USE_STATIC_RUNTIME option: ${USE_STATIC_RUNTIME}")
