@@ -11,7 +11,10 @@ set(PROJECT_HEADERS_DIR
 	"${PROJECT_SOURCE_DIR}/include/pm_shared"
 	"${PROJECT_SOURCE_DIR}/include/public"
 	"${CMAKE_SOURCE_DIR}/public"
+	"${CMAKE_CURRENT_BINARY_DIR}"
 )
+
+configure_file("./version/appversion.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/appversion.h")
 
 set(METAMOD_SOURCES
 	"src/api_info.cpp"
@@ -39,6 +42,8 @@ set(METAMOD_SOURCES
 	"src/studioapi.cpp"
 	"src/sys_module.cpp"
 	"src/utils.cpp"
+
+	"${CMAKE_CURRENT_BINARY_DIR}/version/appversion.h"
 )
 
 # required for ABI compatibility
@@ -48,7 +53,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 add_library(metamod SHARED ${METAMOD_SOURCES})
-add_dependencies(metamod appversion)
 set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(metamod PRIVATE
 	${PROJECT_HEADERS_DIR}

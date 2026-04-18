@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+include(AppVersion)
+
 project(metamod-fwgs LANGUAGES C CXX)
 
 # Project-wide options
@@ -54,29 +56,6 @@ else()
   if(NOT WIN32)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   endif()
-endif()
-
-# Appversion target: run platform-specific script
-if(WIN32)
-    set(MSVC_PREBUILD "${CMAKE_SOURCE_DIR}/metamod/version/appversion.bat")
-    file(TO_NATIVE_PATH "${MSVC_PREBUILD}" SCRIPT_PATH_NATIVE)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/metamod/version" VERSION_DIR_NATIVE)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" PROJECT_ROOT_NATIVE)
-
-    add_custom_command(OUTPUT appversion_command
-        COMMAND cmd /C call "${SCRIPT_PATH_NATIVE}" "${VERSION_DIR_NATIVE}" "${PROJECT_ROOT_NATIVE}"
-        COMMENT "Generating application version header"
-        VERBATIM
-    )
-	add_custom_target(appversion DEPENDS appversion_command)
-else()
-    set(APPVERSION_SCRIPT "${CMAKE_SOURCE_DIR}/metamod/version/appversion.sh")
-    add_custom_command(OUTPUT appversion_command
-        COMMAND ${CMAKE_COMMAND} -E env "SHELL=/bin/sh" bash "${APPVERSION_SCRIPT}" "${CMAKE_SOURCE_DIR}"
-        COMMENT "Generating application version files (sh)"
-        VERBATIM
-    )
-    add_custom_target(appversion DEPENDS appversion_command)
 endif()
 
 add_subdirectory(library-suffix)

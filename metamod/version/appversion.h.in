@@ -1,0 +1,21 @@
+#ifndef __APPVERSION_H__
+#define __APPVERSION_H__
+
+//
+// This file is generated automatically.
+// Don't edit it.
+//
+
+// Version defines
+#define APP_VERSION       "@APP_VERSION@"
+#define APP_VERSION_C     @APP_VERSION_C@
+#define APP_VERSION_STRD  "@APP_VERSION_STRD@"
+#define APP_VERSION_FLAGS 0x0L
+
+#define APP_COMMIT_DATE   "@APP_COMMIT_DATE@"
+#define APP_COMMIT_TIME   "@APP_COMMIT_TIME@"
+
+#define APP_COMMIT_SHA    "@APP_COMMIT_SHA@"
+#define APP_COMMIT_URL    "@APP_COMMIT_URL@"
+
+#endif //__APPVERSION_H__
