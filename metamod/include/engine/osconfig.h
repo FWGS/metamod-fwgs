@@ -87,8 +87,10 @@
 #include <fstream>
 #include <iomanip>
 
+#if defined(__i386__) || defined(__x86_64__)
 #include <smmintrin.h>
 #include <xmmintrin.h>
+#endif
 
 
 #ifdef _WIN32 // WINDOWS
@@ -158,7 +160,11 @@
 	#define NOINLINE __attribute__((noinline))
 	#define ALIGN16 __attribute__((aligned(16)))
 	#define NORETURN __attribute__((noreturn))
+	#if defined(__i386__) || defined(__x86_64__)
 	#define FORCE_STACK_ALIGN __attribute__((force_align_arg_pointer))
+	#else
+	#define FORCE_STACK_ALIGN
+	#endif
 
 #if defined __INTEL_COMPILER
 	#define FUNC_TARGET(x)
