@@ -33,3 +33,7 @@ cd build
 cmake .. --preset linux-x86-debug
 cmake --build .
 ```
+
+## Plugins development
+
+Check repository with implementation of [example Metamod plugin](https://github.com/FWGS/metamod-plugin-template) made in cross-platform way.
