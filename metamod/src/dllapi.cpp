@@ -27,6 +27,7 @@ static BOOL mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *
 static void MM_PRE_HOOK EXT_FUNC mm_ClientDisconnect(edict_t *pEntity)
 {
 	g_players.clear_player_cvar_query(pEntity);
+	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientDisconnect, (pEntity));
 }
 
 // this forward can be disabled from metamod.cpp
