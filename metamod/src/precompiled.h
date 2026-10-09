@@ -44,6 +44,7 @@
 #include "reg_support.h"
 #include "mlist.h"
 #include "mplugin.h"
+#include "api_hook.h"       // api-chain implementation (replaces the old macro set)
 #include "plinfo.h"
 #include "mplayer.h"
 #include "sdk_util.h"

@@ -183,7 +183,7 @@ void metamod_startup()
 	//
 	// However, we have to init the g_plugins object first, because if the
 	// gamedll calls engine functions during GiveFnptrsToDll (like hpb_bot
-	// does) then it needs to be non-null so META_ENGINE_HANDLE won't crash.
+	// does) then it needs to be non-null so the engine api hooks won't crash.
 	//
 	// However, having replaced valid_file with FileExistsInGameDir, we need
 	// to at least initialize the gameDLL to include the gamedir, before

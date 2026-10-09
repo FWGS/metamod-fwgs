@@ -1,10 +1,9 @@
 #include "precompiled.h"
-#include "dllapi_helper_macros.h"
 
 // Unload game DLL and meta plugins
 static void MM_POST_HOOK EXT_FUNC mm_GameShutdown()
 {
-	META_NEWAPI_HANDLE_void(FN_GAMESHUTDOWN, pfnGameShutdown, ());
+	meta_call_void(&NEW_DLL_FUNCTIONS::pfnGameShutdown, newapi_target(g_newapi_info.pfnGameShutdown));
 
 	g_metamod_active = false;
 	if (g_plugins && !g_dedicated_server)
@@ -14,20 +13,21 @@ static void MM_POST_HOOK EXT_FUNC mm_GameShutdown()
 	g_GameDLL.sys_module.unload();
 	g_engine.sys_module.unload();
 
-	RETURN_API_void();
 }
 
 static BOOL mm_ClientConnect(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[ 128 ] )
 {
 	g_players.clear_player_cvar_query(pEntity);
-	META_DLLAPI_HANDLE(BOOL, TRUE, FN_CLIENTCONNECT, pfnClientConnect, (pEntity, pszName, pszAddress, szRejectReason));
-	RETURN_API();
+	return meta_call<BOOL>(&DLL_FUNCTIONS::pfnClientConnect, dllapi_target(g_dllapi_info.pfnClientConnect), TRUE, pEntity, pszName, pszAddress, szRejectReason);
 }
 
+// NOTE: this hook MUST forward to the chain, like every other api hook;
+// the call was lost during the restoration of the api hooks after the JIT
+// machinery was removed (commit 5de9af2) and restored here.
 static void MM_PRE_HOOK EXT_FUNC mm_ClientDisconnect(edict_t *pEntity)
 {
 	g_players.clear_player_cvar_query(pEntity);
-	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientDisconnect, (pEntity));
+	meta_call_void(&DLL_FUNCTIONS::pfnClientDisconnect, dllapi_target(g_dllapi_info.pfnClientDisconnect), pEntity);
 }
 
 // this forward can be disabled from metamod.cpp
@@ -38,14 +38,13 @@ static void MM_PRE_HOOK mm_ClientCommand(edict_t *pEntity)
 		return;
 	}
 
-	META_DLLAPI_HANDLE_void(FN_CLIENTCOMMAND, pfnClientCommand, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnClientCommand, dllapi_target(g_dllapi_info.pfnClientCommand), pEntity);
 }
 
 static void EXT_FUNC mm_ServerDeactivate()
 {
 	//sFunctionTable_jit.pfnServerDeactivate();
-	META_DLLAPI_HANDLE_void(FN_SERVERDEACTIVATE, pfnServerDeactivate, ());
+	meta_call_void(&DLL_FUNCTIONS::pfnServerDeactivate, dllapi_target(g_dllapi_info.pfnServerDeactivate));
 
 	// Update loaded plugins.  Look for new plugins in inifile, as well as
 	// any plugins waiting for a changelevel to load.
@@ -66,310 +65,259 @@ static void EXT_FUNC mm_ServerDeactivate()
 	g_players.clear_all_cvar_queries();
 	g_requestid_counter = 0;
 
-	RETURN_API_void();
 }
 
 static void mm_GameDLLInit(void)
 {
-	META_DLLAPI_HANDLE_void(FN_GAMEINIT, pfnGameInit, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnGameInit, dllapi_target(g_dllapi_info.pfnGameInit));
 }
 
 static int mm_DispatchSpawn(edict_t *pent)
 {
 	// Success == 0, Failure == -1 ?
-	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHSPAWN, pfnSpawn, (pent));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnSpawn, dllapi_target(g_dllapi_info.pfnSpawn), 0, pent);
 }
 
 static void mm_DispatchThink(edict_t *pent)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHTHINK, pfnThink, (pent));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnThink, dllapi_target(g_dllapi_info.pfnThink), pent);
 }
 
 static void mm_DispatchUse(edict_t *pentUsed, edict_t *pentOther)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHUSE, pfnUse, (pentUsed, pentOther));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnUse, dllapi_target(g_dllapi_info.pfnUse), pentUsed, pentOther);
 }
 
 static void mm_DispatchTouch(edict_t *pentTouched, edict_t *pentOther)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHTOUCH, pfnTouch, (pentTouched, pentOther));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnTouch, dllapi_target(g_dllapi_info.pfnTouch), pentTouched, pentOther);
 }
 
 static void mm_DispatchBlocked(edict_t *pentBlocked, edict_t *pentOther)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHBLOCKED, pfnBlocked, (pentBlocked, pentOther));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnBlocked, dllapi_target(g_dllapi_info.pfnBlocked), pentBlocked, pentOther);
 }
 
 static void mm_DispatchKeyValue(edict_t *pentKeyvalue, KeyValueData *pkvd)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHKEYVALUE, pfnKeyValue, (pentKeyvalue, pkvd));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnKeyValue, dllapi_target(g_dllapi_info.pfnKeyValue), pentKeyvalue, pkvd);
 }
 
 static void mm_DispatchSave(edict_t *pent, SAVERESTOREDATA *pSaveData)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHSAVE, pfnSave, (pent, pSaveData));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSave, dllapi_target(g_dllapi_info.pfnSave), pent, pSaveData);
 }
 
 static int mm_DispatchRestore(edict_t *pent, SAVERESTOREDATA *pSaveData, int globalEntity)
 {
 	// Success == 0, Failure == -1 ?
-	META_DLLAPI_HANDLE(int, 0, FN_DISPATCHRESTORE, pfnRestore, (pent, pSaveData, globalEntity));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnRestore, dllapi_target(g_dllapi_info.pfnRestore), 0, pent, pSaveData, globalEntity);
 }
 
 static void mm_DispatchObjectCollsionBox(edict_t *pent)
 {
-	META_DLLAPI_HANDLE_void(FN_DISPATCHOBJECTCOLLISIONBOX, pfnSetAbsBox, (pent));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSetAbsBox, dllapi_target(g_dllapi_info.pfnSetAbsBox), pent);
 }
 
 static void mm_SaveWriteFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount)
 {
-	META_DLLAPI_HANDLE_void(FN_SAVEWRITEFIELDS, pfnSaveWriteFields, (pSaveData, pname, pBaseData, pFields, fieldCount));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSaveWriteFields, dllapi_target(g_dllapi_info.pfnSaveWriteFields), pSaveData, pname, pBaseData, pFields, fieldCount);
 }
 
 static void mm_SaveReadFields(SAVERESTOREDATA *pSaveData, const char *pname, void *pBaseData, TYPEDESCRIPTION *pFields, int fieldCount)
 {
-	META_DLLAPI_HANDLE_void(FN_SAVEREADFIELDS, pfnSaveReadFields, (pSaveData, pname, pBaseData, pFields, fieldCount));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSaveReadFields, dllapi_target(g_dllapi_info.pfnSaveReadFields), pSaveData, pname, pBaseData, pFields, fieldCount);
 }
 
 static void mm_SaveGlobalState(SAVERESTOREDATA *pSaveData)
 {
-	META_DLLAPI_HANDLE_void(FN_SAVEGLOBALSTATE, pfnSaveGlobalState, (pSaveData));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSaveGlobalState, dllapi_target(g_dllapi_info.pfnSaveGlobalState), pSaveData);
 }
 
 static void mm_RestoreGlobalState(SAVERESTOREDATA *pSaveData)
 {
-	META_DLLAPI_HANDLE_void(FN_RESTOREGLOBALSTATE, pfnRestoreGlobalState, (pSaveData));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnRestoreGlobalState, dllapi_target(g_dllapi_info.pfnRestoreGlobalState), pSaveData);
 }
 
 static void mm_ResetGlobalState(void)
 {
-	META_DLLAPI_HANDLE_void(FN_RESETGLOBALSTATE, pfnResetGlobalState, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnResetGlobalState, dllapi_target(g_dllapi_info.pfnResetGlobalState));
 }
 
 static void mm_ClientKill(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_CLIENTKILL, pfnClientKill, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnClientKill, dllapi_target(g_dllapi_info.pfnClientKill), pEntity);
 }
 
 static void mm_ClientPutInServer(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_CLIENTPUTINSERVER, pfnClientPutInServer, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnClientPutInServer, dllapi_target(g_dllapi_info.pfnClientPutInServer), pEntity);
 }
 
 static void mm_ClientUserInfoChanged(edict_t *pEntity, char *infobuffer)
 {
-	META_DLLAPI_HANDLE_void(FN_CLIENTUSERINFOCHANGED, pfnClientUserInfoChanged, (pEntity, infobuffer));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnClientUserInfoChanged, dllapi_target(g_dllapi_info.pfnClientUserInfoChanged), pEntity, infobuffer);
 }
 
 static void mm_ServerActivate(edict_t *pEdictList, int edictCount, int clientMax)
 {
-	META_DLLAPI_HANDLE_void(FN_SERVERACTIVATE, pfnServerActivate, (pEdictList, edictCount, clientMax));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnServerActivate, dllapi_target(g_dllapi_info.pfnServerActivate), pEdictList, edictCount, clientMax);
 }
 
 static void mm_PlayerPreThink(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_PLAYERPRETHINK, pfnPlayerPreThink, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnPlayerPreThink, dllapi_target(g_dllapi_info.pfnPlayerPreThink), pEntity);
 }
 
 static void mm_PlayerPostThink(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_PLAYERPOSTTHINK, pfnPlayerPostThink, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnPlayerPostThink, dllapi_target(g_dllapi_info.pfnPlayerPostThink), pEntity);
 }
 
 static void mm_StartFrame(void)
 {
-	META_DLLAPI_HANDLE_void(FN_STARTFRAME, pfnStartFrame, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnStartFrame, dllapi_target(g_dllapi_info.pfnStartFrame));
 }
 
 static void mm_ParmsNewLevel(void)
 {
-	META_DLLAPI_HANDLE_void(FN_PARMSNEWLEVEL, pfnParmsNewLevel, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnParmsNewLevel, dllapi_target(g_dllapi_info.pfnParmsNewLevel));
 }
 
 static void mm_ParmsChangeLevel(void)
 {
-	META_DLLAPI_HANDLE_void(FN_PARMSCHANGELEVEL, pfnParmsChangeLevel, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnParmsChangeLevel, dllapi_target(g_dllapi_info.pfnParmsChangeLevel));
 }
 
 static const char *mm_GetGameDescription(void)
 {
-	META_DLLAPI_HANDLE(const char *, NULL, FN_GETGAMEDESCRIPTION, pfnGetGameDescription, ());
-	RETURN_API();
+	return meta_call<const char *>(&DLL_FUNCTIONS::pfnGetGameDescription, dllapi_target(g_dllapi_info.pfnGetGameDescription), NULL);
 }
 
 static void mm_PlayerCustomization(edict_t *pEntity, customization_t *pCust)
 {
-	META_DLLAPI_HANDLE_void(FN_PLAYERCUSTOMIZATION, pfnPlayerCustomization, (pEntity, pCust));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnPlayerCustomization, dllapi_target(g_dllapi_info.pfnPlayerCustomization), pEntity, pCust);
 }
 
 static void mm_SpectatorConnect(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_SPECTATORCONNECT, pfnSpectatorConnect, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSpectatorConnect, dllapi_target(g_dllapi_info.pfnSpectatorConnect), pEntity);
 }
 
 static void mm_SpectatorDisconnect(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_SPECTATORDISCONNECT, pfnSpectatorDisconnect, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSpectatorDisconnect, dllapi_target(g_dllapi_info.pfnSpectatorDisconnect), pEntity);
 }
 
 static void mm_SpectatorThink(edict_t *pEntity)
 {
-	META_DLLAPI_HANDLE_void(FN_SPECTATORTHINK, pfnSpectatorThink, (pEntity));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSpectatorThink, dllapi_target(g_dllapi_info.pfnSpectatorThink), pEntity);
 }
 
 static void mm_Sys_Error(const char *error_string)
 {
-	META_DLLAPI_HANDLE_void(FN_SYS_ERROR, pfnSys_Error, (error_string));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSys_Error, dllapi_target(g_dllapi_info.pfnSys_Error), error_string);
 }
 
 static void mm_PM_Move (struct playermove_s *ppmove, int server)
 {
-	META_DLLAPI_HANDLE_void(FN_PM_MOVE, pfnPM_Move, (ppmove, server));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnPM_Move, dllapi_target(g_dllapi_info.pfnPM_Move), ppmove, server);
 }
 
 static void mm_PM_Init(struct playermove_s *ppmove)
 {
-	META_DLLAPI_HANDLE_void(FN_PM_INIT, pfnPM_Init, (ppmove));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnPM_Init, dllapi_target(g_dllapi_info.pfnPM_Init), ppmove);
 }
 
 static char mm_PM_FindTextureType(char *name)
 {
-	META_DLLAPI_HANDLE(char, '\0', FN_PM_FINDTEXTURETYPE, pfnPM_FindTextureType, (name));
-	RETURN_API();
+	return meta_call<char>(&DLL_FUNCTIONS::pfnPM_FindTextureType, dllapi_target(g_dllapi_info.pfnPM_FindTextureType), '\0', name);
 }
 
 static void mm_SetupVisibility(edict_t *pViewEntity, edict_t *pClient, unsigned char **pvs, unsigned char **pas)
 {
-	META_DLLAPI_HANDLE_void(FN_SETUPVISIBILITY, pfnSetupVisibility, (pViewEntity, pClient, pvs, pas));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnSetupVisibility, dllapi_target(g_dllapi_info.pfnSetupVisibility), pViewEntity, pClient, pvs, pas);
 }
 
 static void mm_UpdateClientData (const struct edict_s *ent, int sendweapons, struct clientdata_s *cd)
 {
-	META_DLLAPI_HANDLE_void(FN_UPDATECLIENTDATA, pfnUpdateClientData, (ent, sendweapons, cd));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnUpdateClientData, dllapi_target(g_dllapi_info.pfnUpdateClientData), ent, sendweapons, cd);
 }
 
 static int mm_AddToFullPack(struct entity_state_s *state, int e, edict_t *ent, edict_t *host, int hostflags, int player, unsigned char *pSet)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_ADDTOFULLPACK, pfnAddToFullPack, (state, e, ent, host, hostflags, player, pSet));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnAddToFullPack, dllapi_target(g_dllapi_info.pfnAddToFullPack), 0, state, e, ent, host, hostflags, player, pSet);
 }
 
 static void mm_CreateBaseline(int player, int eindex, struct entity_state_s *baseline, struct edict_s *entity, int playermodelindex, vec3_t player_mins, vec3_t player_maxs)
 {
-	META_DLLAPI_HANDLE_void(FN_CREATEBASELINE, pfnCreateBaseline, (player, eindex, baseline, entity, playermodelindex, player_mins, player_maxs));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnCreateBaseline, dllapi_target(g_dllapi_info.pfnCreateBaseline), player, eindex, baseline, entity, playermodelindex, player_mins, player_maxs);
 }
 
 static void mm_RegisterEncoders(void)
 {
-	META_DLLAPI_HANDLE_void(FN_REGISTERENCODERS, pfnRegisterEncoders, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnRegisterEncoders, dllapi_target(g_dllapi_info.pfnRegisterEncoders));
 }
 
 static int mm_GetWeaponData(struct edict_s *player, struct weapon_data_s *info)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_GETWEAPONDATA, pfnGetWeaponData, (player, info));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnGetWeaponData, dllapi_target(g_dllapi_info.pfnGetWeaponData), 0, player, info);
 }
 
 static void mm_CmdStart(const edict_t *player, const struct usercmd_s *cmd, unsigned int random_seed)
 {
-	META_DLLAPI_HANDLE_void(FN_CMDSTART, pfnCmdStart, (player, cmd, random_seed));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnCmdStart, dllapi_target(g_dllapi_info.pfnCmdStart), player, cmd, random_seed);
 }
 
 static void mm_CmdEnd (const edict_t *player)
 {
-	META_DLLAPI_HANDLE_void(FN_CMDEND, pfnCmdEnd, (player));
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnCmdEnd, dllapi_target(g_dllapi_info.pfnCmdEnd), player);
 }
 
 static int mm_ConnectionlessPacket(const struct netadr_s *net_from, const char *args, char *response_buffer, int *response_buffer_size)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_CONNECTIONLESSPACKET, pfnConnectionlessPacket, (net_from, args, response_buffer, response_buffer_size));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnConnectionlessPacket, dllapi_target(g_dllapi_info.pfnConnectionlessPacket), 0, net_from, args, response_buffer, response_buffer_size);
 }
 
 static int mm_GetHullBounds(int hullnumber, float *mins, float *maxs)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_GETHULLBOUNDS, pfnGetHullBounds, (hullnumber, mins, maxs));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnGetHullBounds, dllapi_target(g_dllapi_info.pfnGetHullBounds), 0, hullnumber, mins, maxs);
 }
 
 static void mm_CreateInstancedBaselines (void)
 {
-	META_DLLAPI_HANDLE_void(FN_CREATEINSTANCEDBASELINES, pfnCreateInstancedBaselines, ());
-	RETURN_API_void();
+	meta_call_void(&DLL_FUNCTIONS::pfnCreateInstancedBaselines, dllapi_target(g_dllapi_info.pfnCreateInstancedBaselines));
 }
 
 static int mm_InconsistentFile(const edict_t *player, const char *filename, char *disconnect_message)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_INCONSISTENTFILE, pfnInconsistentFile, (player, filename, disconnect_message));
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnInconsistentFile, dllapi_target(g_dllapi_info.pfnInconsistentFile), 0, player, filename, disconnect_message);
 }
 
 static int mm_AllowLagCompensation(void)
 {
-	META_DLLAPI_HANDLE(int, 0, FN_ALLOWLAGCOMPENSATION, pfnAllowLagCompensation, ());
-	RETURN_API();
+	return meta_call<int>(&DLL_FUNCTIONS::pfnAllowLagCompensation, dllapi_target(g_dllapi_info.pfnAllowLagCompensation), 0);
 }
 
 static void mm_OnFreeEntPrivateData(edict_t *pEnt)
 {
-	META_NEWAPI_HANDLE_void(FN_ONFREEENTPRIVATEDATA, pfnOnFreeEntPrivateData, (pEnt));
-	RETURN_API_void();
+	meta_call_void(&NEW_DLL_FUNCTIONS::pfnOnFreeEntPrivateData, newapi_target(g_newapi_info.pfnOnFreeEntPrivateData), pEnt);
 }
 
 static int mm_ShouldCollide(edict_t *pentTouched, edict_t *pentOther)
 {
-	META_NEWAPI_HANDLE(int, 1, FN_SHOULDCOLLIDE, pfnShouldCollide, (pentTouched, pentOther));
-	RETURN_API();
+	return meta_call<int>(&NEW_DLL_FUNCTIONS::pfnShouldCollide, newapi_target(g_newapi_info.pfnShouldCollide), 1, pentTouched, pentOther);
 }
 
 static void mm_CvarValue(const edict_t *pEdict, const char *value)
 {
 	g_players.clear_player_cvar_query(pEdict);
-	META_NEWAPI_HANDLE_void(FN_CVARVALUE, pfnCvarValue, (pEdict, value));
-	RETURN_API_void();
+	meta_call_void(&NEW_DLL_FUNCTIONS::pfnCvarValue, newapi_target(g_newapi_info.pfnCvarValue), pEdict, value);
 }
 
 static void mm_CvarValue2(const edict_t *pEdict, int requestID, const char *cvarName, const char *value)
 {
-	META_NEWAPI_HANDLE_void(FN_CVARVALUE2, pfnCvarValue2, (pEdict, requestID, cvarName, value));
-	RETURN_API_void();
+	meta_call_void(&NEW_DLL_FUNCTIONS::pfnCvarValue2, newapi_target(g_newapi_info.pfnCvarValue2), pEdict, requestID, cvarName, value);
 }
 
 DLL_FUNCTIONS sFunctionTable =
