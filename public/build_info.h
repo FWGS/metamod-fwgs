@@ -139,12 +139,6 @@ namespace BuildInfo
 #endif
 	}
 
-	// Returns project GitHub repository URL.
-	constexpr const char *GetGitHubLink()
-	{
-		return "https://github.com/SNMetamorph/PrimeXT";
-	}
-
 	// Returns build host machine date when program was built.
 	constexpr const char *GetDate()
 	{
