@@ -14,7 +14,22 @@ set(PROJECT_HEADERS_DIR
 	"${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-configure_file("./version/appversion.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/appversion.h")
+configure_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/version/appversion_command.cmake.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/version/appversion_command.cmake"
+)
+
+#
+# The header is (re)generated on every build, not only on reconfigure:
+# the script queries git each time, and configure_file() inside it
+# touches the file only when version information actually changed.
+#
+add_custom_target(appversion ALL
+	COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/version/appversion_command.cmake"
+	BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/version/appversion.h"
+	COMMENT "Checking version information..."
+	VERBATIM
+)
 
 set(METAMOD_SOURCES
 	"src/api_info.cpp"
@@ -50,10 +65,20 @@ set(METAMOD_SOURCES
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.rc")
 	list(APPEND METAMOD_SOURCES "msvc/metamod.def")
+
+	# rc.exe doesn't report include dependencies to CMake, so the resource
+	# compiler must be told explicitly to re-run when the generated header
+	# (holding FILEVERSION and co) changes
+	set_source_files_properties("msvc/metamod.rc" PROPERTIES
+		OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/version/appversion.h"
+	)
 endif()
 
 add_library(metamod SHARED ${METAMOD_SOURCES})
 set_target_properties(metamod PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# build order guarantee: needed after add_library, before compiling sources
+add_dependencies(metamod appversion)
 target_include_directories(metamod PRIVATE
 	${PROJECT_HEADERS_DIR}
 )

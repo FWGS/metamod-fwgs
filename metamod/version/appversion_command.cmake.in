@@ -1,0 +1,15 @@
+# Generated automatically on CMake configure.
+# Runs the version collection script with values resolved at configure time,
+# so the build-time command line needs no complex quoting arguments.
+
+set(APP_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(APP_BINARY_DIR "@CMAKE_CURRENT_BINARY_DIR@")
+
+# user overrides passed at configure time take precedence over git detection
+set(APP_COMMIT_COUNT "@APP_COMMIT_COUNT@")
+set(APP_COMMIT_SHA   "@APP_COMMIT_SHA@")
+set(APP_COMMIT_DATE  "@APP_COMMIT_DATE@")
+set(APP_COMMIT_TIME  "@APP_COMMIT_TIME@")
+set(APP_COMMIT_DIRTY "@APP_COMMIT_DIRTY@")
+
+include("@CMAKE_SOURCE_DIR@/cmake/AppVersion.cmake")
