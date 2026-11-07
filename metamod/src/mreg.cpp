@@ -1,5 +1,8 @@
 #include "precompiled.h"
 
+#include <cstddef>
+#include <cstdint>
+
 MRegCmd::MRegCmd(const char* cmd_name, REG_CMD_FN cmd_handler, MPlugin* cmd_plugin) : m_pfunction(cmd_handler), m_plugid(cmd_plugin ? cmd_plugin->index() : 0), m_status(RG_VALID)
 {
 	m_name = Q_strdup(cmd_name);
@@ -152,21 +155,49 @@ void MRegCmdList::show(int plugin_id) const
 	META_CONS("%d commands", total_count);
 }
 
-MRegCvar::MRegCvar(cvar_t* cv_ptr, MPlugin* cv_plugin) : m_cvar(cv_ptr), m_plugid(cv_plugin ? cv_plugin->index() : 0), m_status(RG_VALID)
+// Xash3D marks an extended cvar with this value in cvar_t::next
+static constexpr std::uintptr_t XASH_CVAR_SENTINEL = static_cast<std::uintptr_t>(
+	sizeof(void*) == 8 ? 0xDEADBEEFDEADBEEFull : 0xDEADBEEFu);
+
+// Xash3D's extended cvar layout
+struct cvar_ext_t
 {
-	m_cvar = new cvar_t;
+	cvar_t	base;
+	char*	desc;
+	char*	def_string;
+};
+
+static_assert(offsetof(cvar_ext_t, base) == 0, "Unexpected Xash3D cvar base offset");
+static_assert(offsetof(cvar_ext_t, desc) == sizeof(cvar_t), "Unexpected Xash3D cvar description offset");
+static_assert(offsetof(cvar_ext_t, def_string) == sizeof(cvar_t) + sizeof(char*), "Unexpected Xash3D cvar default string offset");
+static_assert(sizeof(cvar_ext_t) == sizeof(cvar_t) + 2 * sizeof(char*), "Unexpected Xash3D extended cvar size");
+
+MRegCvar::MRegCvar(cvar_t* cv_ptr, MPlugin* cv_plugin) : m_cvar(nullptr), m_original_string(nullptr), m_plugid(cv_plugin ? cv_plugin->index() : 0), m_status(RG_VALID)
+{
+	auto ext = new cvar_ext_t{};
+	m_cvar = &ext->base;
 	m_cvar->name = Q_strdup(cv_ptr->name);
-	m_cvar->string = Q_strdup(cv_ptr->string);
+	m_original_string = Q_strdup(cv_ptr->string);
+	m_cvar->string = m_original_string;
 	m_cvar->flags = cv_ptr->flags;
 	m_cvar->value = cv_ptr->value;
 	m_cvar->next = cv_ptr->next;
+
+	if (reinterpret_cast<std::uintptr_t>(cv_ptr->next) == XASH_CVAR_SENTINEL) {
+		const char* desc = nullptr;
+		const auto desc_address = reinterpret_cast<std::uintptr_t>(cv_ptr) + offsetof(cvar_ext_t, desc);
+		Q_memcpy(&desc, reinterpret_cast<const void*>(desc_address), sizeof(desc));
+		ext->desc = desc ? Q_strdup(desc) : nullptr;
+	}
 }
 
 MRegCvar::~MRegCvar()
 {
+	auto ext = reinterpret_cast<cvar_ext_t*>(m_cvar);
 	free((void *)m_cvar->name);
-	free(m_cvar->string);
-	delete m_cvar;
+	free(m_original_string);
+	free(ext->desc);
+	delete ext;
 }
 
 cvar_t* MRegCvar::getcvar() const
