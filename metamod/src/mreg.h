@@ -77,6 +77,7 @@ public:
 
 private:
 	cvar_t*		m_cvar;
+	char*		m_original_string;	// Owned by Metamod; Xash3D also retains it as def_string
 	int			m_plugid;
 	REG_STATUS	m_status;
 
